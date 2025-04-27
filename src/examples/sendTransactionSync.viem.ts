@@ -45,7 +45,7 @@ export async function sendTransactionWithSync(
   // Define chain with the detected chain ID
   const chain = defineChain({
     id: chainId,
-    name: 'Dynamic Chain',
+    name: 'RISE Testnet',
     nativeCurrency: {
       decimals: 18,
       name: 'Ether',
