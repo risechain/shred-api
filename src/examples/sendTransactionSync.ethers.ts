@@ -1,5 +1,5 @@
 import { JsonRpcProvider, parseEther, TransactionReceipt, Wallet } from "ethers";
-import { SyncTransactionProvider } from "../src/middleware/syncTransactionProvider";
+import { SyncTransactionProvider } from "../middleware/syncTransactionProvider";
 import 'dotenv/config';
 
 
@@ -36,7 +36,10 @@ export async function sendTransactionWithSync(
   const signedTx = await wallet.signTransaction(tx);
   
   // Send the transaction and get receipt in one call
-  return provider.sendRawTransactionSync(signedTx);
+  console.time('Transaction Latency')
+  const receipt = await provider.sendRawTransactionSync(signedTx);
+  console.timeEnd('Transaction Latency')
+  return receipt
 }
 
 /**
