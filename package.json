@@ -1,39 +1,70 @@
 {
-  "name": "shred-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "rise-shred-client",
+  "version": "1.0.1",
+  "description": "API client for RISE Chain with synchronous transaction support",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/rise-shred-client.umd.js",
+  "module": "./dist/rise-shred-client.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/rise-shred-client.es.js",
+      "require": "./dist/rise-shred-client.umd.js"
+    }
+  },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "lint": "eslint . --ext .ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build",
+    "publish": "node scripts/publish.js",
+    "test:link": "scripts/setup-test-project.sh",
+    "test:pack": "scripts/pack-and-test.sh"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SmoothBot/shred-api.git"
+    "url": "git+https://github.com/SmoothBot/rise-shred-client.git"
   },
-  "keywords": [],
-  "author": "SmoothBot",
-  "license": "ISC",
+  "keywords": [
+    "ethereum",
+    "rise",
+    "blockchain",
+    "transactions",
+    "ethers",
+    "viem"
+  ],
+  "author": "RISE Labs",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SmoothBot/shred-api/issues"
+    "url": "https://github.com/SmoothBot/rise-shred-client/issues"
   },
-  "homepage": "https://github.com/SmoothBot/shred-api#readme",
+  "homepage": "https://github.com/SmoothBot/rise-shred-client#readme",
   "dependencies": {
-    "@types/express": "^5.0.1",
-    "@types/node": "^22.15.2",
-    "dotenv": "^16.5.0",
     "ethers": "^6.13.7",
+    "viem": "^2.28.0"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1", 
+    "@types/node": "^22.15.2",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/parser": "^8.31.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.25.1",
     "express": "^5.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "viem": "^2.28.0"
-  },
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.31.0",
-    "@typescript-eslint/parser": "^8.31.0",
-    "eslint": "^9.25.1"
+    "vite": "^6.3.3",
+    "vite-plugin-dts": "^4.5.3"
   }
 }

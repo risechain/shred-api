@@ -1,0 +1,33 @@
+# Source files
+src/
+examples/
+
+# Dev configs
+.eslintrc
+.eslintignore
+tsconfig.json
+vite.config.ts
+
+# Environment files
+.env
+.env.*
+
+# Editor files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git
+.git/
+.gitignore
+
+# Misc
+node_modules/
+coverage/
+.DS_Store
+*.tgz

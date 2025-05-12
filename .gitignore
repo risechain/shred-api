@@ -1,5 +1,25 @@
 
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Logs
 *.log
+
+# Test directories
+test-link/
+test-pack/
+*.tgz
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
