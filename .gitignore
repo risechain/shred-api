@@ -23,3 +23,5 @@ test-pack/
 .idea/
 *.sublime-*
 .DS_Store
+
+**/.claude/settings.local.json

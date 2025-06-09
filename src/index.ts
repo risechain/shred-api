@@ -11,6 +11,12 @@ export { SyncTransactionProvider } from './middleware/syncTransactionProvider';
 // Viem exports 
 export { syncTransport } from './middleware/syncTransactionTransport';
 export { 
+  shredWebSocket,
+  type ShredTransport,
+  type ShredSubscription,
+  type ShredSubscribeParams
+} from './middleware/shredWebsocket';
+export { 
   createSyncPublicClient,
   type SyncPublicClient 
 } from './middleware/syncTransactionClient';
