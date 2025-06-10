@@ -1,0 +1,1143 @@
+diff --git a/_esm/clients/transports/webSocket.js b/_esm/clients/transports/webSocket.js
+index 321bcff3369f154467266df25cb8428a758219d9..71ef39c8404041f8f1d01c21f9e8f0294302c4a9 100644
+--- a/_esm/clients/transports/webSocket.js
++++ b/_esm/clients/transports/webSocket.js
+@@ -7,87 +7,93 @@ import { createTransport, } from './createTransport.js';
+  * @description Creates a WebSocket transport that connects to a JSON-RPC API.
+  */
+ export function webSocket(
+-/** URL of the JSON-RPC API. Defaults to the chain's public RPC URL. */
+-url, config = {}) {
+-    const { keepAlive, key = 'webSocket', methods, name = 'WebSocket JSON-RPC', reconnect, retryDelay, } = config;
+-    return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
+-        const retryCount = config.retryCount ?? retryCount_;
+-        const timeout = timeout_ ?? config.timeout ?? 10_000;
+-        const url_ = url || chain?.rpcUrls.default.webSocket?.[0];
+-        const wsRpcClientOpts = { keepAlive, reconnect };
+-        if (!url_)
+-            throw new UrlRequiredError();
+-        return createTransport({
+-            key,
+-            methods,
+-            name,
+-            async request({ method, params }) {
+-                const body = { method, params };
+-                const rpcClient = await getWebSocketRpcClient(url_, wsRpcClientOpts);
+-                const { error, result } = await rpcClient.requestAsync({
+-                    body,
+-                    timeout,
+-                });
+-                if (error)
+-                    throw new RpcRequestError({
+-                        body,
+-                        error,
+-                        url: url_,
+-                    });
+-                return result;
+-            },
+-            retryCount,
+-            retryDelay,
+-            timeout,
+-            type: 'webSocket',
+-        }, {
+-            getSocket() {
+-                return getSocket(url_);
+-            },
+-            getRpcClient() {
+-                return getWebSocketRpcClient(url_, wsRpcClientOpts);
+-            },
+-            async subscribe({ params, onData, onError }) {
+-                const rpcClient = await getWebSocketRpcClient(url_, wsRpcClientOpts);
+-                const { result: subscriptionId } = await new Promise((resolve, reject) => rpcClient.request({
+-                    body: {
+-                        method: 'eth_subscribe',
+-                        params,
+-                    },
+-                    onError(error) {
+-                        reject(error);
+-                        onError?.(error);
+-                        return;
+-                    },
+-                    onResponse(response) {
+-                        if (response.error) {
+-                            reject(response.error);
+-                            onError?.(response.error);
+-                            return;
+-                        }
+-                        if (typeof response.id === 'number') {
+-                            resolve(response);
+-                            return;
+-                        }
+-                        if (response.method !== 'eth_subscription')
+-                            return;
+-                        onData(response.params);
+-                    },
+-                }));
+-                return {
+-                    subscriptionId,
+-                    async unsubscribe() {
+-                        return new Promise((resolve) => rpcClient.request({
+-                            body: {
+-                                method: 'eth_unsubscribe',
+-                                params: [subscriptionId],
+-                            },
+-                            onResponse: resolve,
+-                        }));
+-                    },
+-                };
+-            },
++  /** URL of the JSON-RPC API. Defaults to the chain's public RPC URL. */
++  url, config = {}) {
++  const { keepAlive, key = 'webSocket', methods, name = 'WebSocket JSON-RPC', reconnect, retryDelay, } = config;
++  return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
++    const retryCount = config.retryCount ?? retryCount_;
++    const timeout = timeout_ ?? config.timeout ?? 10_000;
++    const url_ = url || chain?.rpcUrls.default.webSocket?.[0];
++    const wsRpcClientOpts = { keepAlive, reconnect };
++    if (!url_)
++      throw new UrlRequiredError();
++    return createTransport({
++      key,
++      methods,
++      name,
++      async request({ method, params }) {
++        const body = { method, params };
++        const rpcClient = await getWebSocketRpcClient(url_, wsRpcClientOpts);
++        const { error, result } = await rpcClient.requestAsync({
++          body,
++          timeout,
+         });
+-    };
++        if (error)
++          throw new RpcRequestError({
++            body,
++            error,
++            url: url_,
++          });
++        return result;
++      },
++      retryCount,
++      retryDelay,
++      timeout,
++      type: 'webSocket',
++    }, {
++      getSocket() {
++        return getSocket(url_);
++      },
++      getRpcClient(namespace = 'eth') {
++        return getWebSocketRpcClient(url_, {
++          ...wsRpcClientOpts,
++          namespace,
++        });
++      },
++      async subscribe({ params, onData, onError, namespace = 'eth' }) {
++        const rpcClient = await getWebSocketRpcClient(url_, {
++          ...wsRpcClientOpts,
++          namespace,
++        });
++        const { result: subscriptionId } = await new Promise((resolve, reject) => rpcClient.request({
++          body: {
++            method: `${namespace}_subscribe`,
++            params,
++          },
++          onError(error) {
++            reject(error);
++            onError?.(error);
++            return;
++          },
++          onResponse(response) {
++            if (response.error) {
++              reject(response.error);
++              onError?.(response.error);
++              return;
++            }
++            if (typeof response.id === 'number') {
++              resolve(response);
++              return;
++            }
++            if (response.method !== `${namespace}_subscription`)
++              return;
++            onData(response.params);
++          },
++        }));
++        return {
++          subscriptionId,
++          async unsubscribe() {
++            return new Promise((resolve) => rpcClient.request({
++              body: {
++                method: `${namespace}_unsubscribe`,
++                params: [subscriptionId],
++              },
++              onResponse: resolve,
++            }));
++          },
++        };
++      },
++    });
++  };
+ }
+ //# sourceMappingURL=webSocket.js.map
+\ No newline at end of file
+diff --git a/_esm/utils/rpc/socket.js b/_esm/utils/rpc/socket.js
+index 2bbe37eba29dc1d1b590d872ac29e46dae34d270..aca2e99d61a1709b3431144965da732d1a7dfe26 100644
+--- a/_esm/utils/rpc/socket.js
++++ b/_esm/utils/rpc/socket.js
+@@ -4,154 +4,154 @@ import { withTimeout } from '../promise/withTimeout.js';
+ import { idCache } from './id.js';
+ export const socketClientCache = /*#__PURE__*/ new Map();
+ export async function getSocketRpcClient(parameters) {
+-    const { getSocket, keepAlive = true, key = 'socket', reconnect = true, url, } = parameters;
+-    const { interval: keepAliveInterval = 30_000 } = typeof keepAlive === 'object' ? keepAlive : {};
+-    const { attempts = 5, delay = 2_000 } = typeof reconnect === 'object' ? reconnect : {};
+-    let socketClient = socketClientCache.get(`${key}:${url}`);
+-    // If the socket already exists, return it.
+-    if (socketClient)
+-        return socketClient;
+-    let reconnectCount = 0;
+-    const { schedule } = createBatchScheduler({
+-        id: `${key}:${url}`,
+-        fn: async () => {
+-            // Set up a cache for incoming "synchronous" requests.
+-            const requests = new Map();
+-            // Set up a cache for subscriptions (eth_subscribe).
+-            const subscriptions = new Map();
+-            let error;
+-            let socket;
+-            let keepAliveTimer;
+-            // Set up socket implementation.
+-            async function setup() {
+-                const result = await getSocket({
+-                    onClose() {
+-                        // Notify all requests and subscriptions of the closure error.
+-                        for (const request of requests.values())
+-                            request.onError?.(new SocketClosedError({ url }));
+-                        for (const subscription of subscriptions.values())
+-                            subscription.onError?.(new SocketClosedError({ url }));
+-                        // Attempt to reconnect.
+-                        if (reconnect && reconnectCount < attempts)
+-                            setTimeout(async () => {
+-                                reconnectCount++;
+-                                await setup().catch(console.error);
+-                            }, delay);
+-                        // Otherwise, clear all requests and subscriptions.
+-                        else {
+-                            requests.clear();
+-                            subscriptions.clear();
+-                        }
+-                    },
+-                    onError(error_) {
+-                        error = error_;
+-                        // Notify all requests and subscriptions of the error.
+-                        for (const request of requests.values())
+-                            request.onError?.(error);
+-                        for (const subscription of subscriptions.values())
+-                            subscription.onError?.(error);
+-                        // Make sure socket is definitely closed.
+-                        socketClient?.close();
+-                        // Attempt to reconnect.
+-                        if (reconnect && reconnectCount < attempts)
+-                            setTimeout(async () => {
+-                                reconnectCount++;
+-                                await setup().catch(console.error);
+-                            }, delay);
+-                        // Otherwise, clear all requests and subscriptions.
+-                        else {
+-                            requests.clear();
+-                            subscriptions.clear();
+-                        }
+-                    },
+-                    onOpen() {
+-                        error = undefined;
+-                        reconnectCount = 0;
+-                    },
+-                    onResponse(data) {
+-                        const isSubscription = data.method === 'eth_subscription';
+-                        const id = isSubscription ? data.params.subscription : data.id;
+-                        const cache = isSubscription ? subscriptions : requests;
+-                        const callback = cache.get(id);
+-                        if (callback)
+-                            callback.onResponse(data);
+-                        if (!isSubscription)
+-                            cache.delete(id);
+-                    },
+-                });
+-                socket = result;
+-                if (keepAlive) {
+-                    if (keepAliveTimer)
+-                        clearInterval(keepAliveTimer);
+-                    keepAliveTimer = setInterval(() => socket.ping?.(), keepAliveInterval);
+-                }
+-                return result;
++  const { getSocket, keepAlive = true, key = 'socket', reconnect = true, url, namespace = 'eth' } = parameters;
++  const { interval: keepAliveInterval = 30_000 } = typeof keepAlive === 'object' ? keepAlive : {};
++  const { attempts = 5, delay = 2_000 } = typeof reconnect === 'object' ? reconnect : {};
++  let socketClient = socketClientCache.get(`${key}:${url}`);
++  // If the socket already exists, return it.
++  if (socketClient)
++    return socketClient;
++  let reconnectCount = 0;
++  const { schedule } = createBatchScheduler({
++    id: `${key}:${url}`,
++    fn: async () => {
++      // Set up a cache for incoming "synchronous" requests.
++      const requests = new Map();
++      // Set up a cache for subscriptions (eth_subscribe).
++      const subscriptions = new Map();
++      let error;
++      let socket;
++      let keepAliveTimer;
++      // Set up socket implementation.
++      async function setup() {
++        const result = await getSocket({
++          onClose() {
++            // Notify all requests and subscriptions of the closure error.
++            for (const request of requests.values())
++              request.onError?.(new SocketClosedError({ url }));
++            for (const subscription of subscriptions.values())
++              subscription.onError?.(new SocketClosedError({ url }));
++            // Attempt to reconnect.
++            if (reconnect && reconnectCount < attempts)
++              setTimeout(async () => {
++                reconnectCount++;
++                await setup().catch(console.error);
++              }, delay);
++            // Otherwise, clear all requests and subscriptions.
++            else {
++              requests.clear();
++              subscriptions.clear();
+             }
+-            await setup();
++          },
++          onError(error_) {
++            error = error_;
++            // Notify all requests and subscriptions of the error.
++            for (const request of requests.values())
++              request.onError?.(error);
++            for (const subscription of subscriptions.values())
++              subscription.onError?.(error);
++            // Make sure socket is definitely closed.
++            socketClient?.close();
++            // Attempt to reconnect.
++            if (reconnect && reconnectCount < attempts)
++              setTimeout(async () => {
++                reconnectCount++;
++                await setup().catch(console.error);
++              }, delay);
++            // Otherwise, clear all requests and subscriptions.
++            else {
++              requests.clear();
++              subscriptions.clear();
++            }
++          },
++          onOpen() {
+             error = undefined;
+-            // Create a new socket instance.
+-            socketClient = {
+-                close() {
+-                    keepAliveTimer && clearInterval(keepAliveTimer);
+-                    socket.close();
+-                    socketClientCache.delete(`${key}:${url}`);
+-                },
+-                get socket() {
+-                    return socket;
+-                },
+-                request({ body, onError, onResponse }) {
+-                    if (error && onError)
+-                        onError(error);
+-                    const id = body.id ?? idCache.take();
+-                    const callback = (response) => {
+-                        if (typeof response.id === 'number' && id !== response.id)
+-                            return;
+-                        // If we are subscribing to a topic, we want to set up a listener for incoming
+-                        // messages.
+-                        if (body.method === 'eth_subscribe' &&
+-                            typeof response.result === 'string')
+-                            subscriptions.set(response.result, {
+-                                onResponse: callback,
+-                                onError,
+-                            });
+-                        // If we are unsubscribing from a topic, we want to remove the listener.
+-                        if (body.method === 'eth_unsubscribe')
+-                            subscriptions.delete(body.params?.[0]);
+-                        onResponse(response);
+-                    };
+-                    requests.set(id, { onResponse: callback, onError });
+-                    try {
+-                        socket.request({
+-                            body: {
+-                                jsonrpc: '2.0',
+-                                id,
+-                                ...body,
+-                            },
+-                        });
+-                    }
+-                    catch (error) {
+-                        onError?.(error);
+-                    }
+-                },
+-                requestAsync({ body, timeout = 10_000 }) {
+-                    return withTimeout(() => new Promise((onResponse, onError) => this.request({
+-                        body,
+-                        onError,
+-                        onResponse,
+-                    })), {
+-                        errorInstance: new TimeoutError({ body, url }),
+-                        timeout,
+-                    });
+-                },
+-                requests,
+-                subscriptions,
+-                url,
+-            };
+-            socketClientCache.set(`${key}:${url}`, socketClient);
+-            return [socketClient];
++            reconnectCount = 0;
++          },
++          onResponse(data) {
++            const isSubscription = data.method === `${namespace}_subscription`;
++            const id = isSubscription ? data.params.subscription : data.id;
++            const cache = isSubscription ? subscriptions : requests;
++            const callback = cache.get(id);
++            if (callback)
++              callback.onResponse(data);
++            if (!isSubscription)
++              cache.delete(id);
++          },
++        });
++        socket = result;
++        if (keepAlive) {
++          if (keepAliveTimer)
++            clearInterval(keepAliveTimer);
++          keepAliveTimer = setInterval(() => socket.ping?.(), keepAliveInterval);
++        }
++        return result;
++      }
++      await setup();
++      error = undefined;
++      // Create a new socket instance.
++      socketClient = {
++        close() {
++          keepAliveTimer && clearInterval(keepAliveTimer);
++          socket.close();
++          socketClientCache.delete(`${key}:${url}`);
++        },
++        get socket() {
++          return socket;
++        },
++        request({ body, onError, onResponse }) {
++          if (error && onError)
++            onError(error);
++          const id = body.id ?? idCache.take();
++          const callback = (response) => {
++            if (typeof response.id === 'number' && id !== response.id)
++              return;
++            // If we are subscribing to a topic, we want to set up a listener for incoming
++            // messages.
++            if (body.method === `${namespace}_subscribe` &&
++              typeof response.result === 'string')
++              subscriptions.set(response.result, {
++                onResponse: callback,
++                onError,
++              });
++            // If we are unsubscribing from a topic, we want to remove the listener.
++            if (body.method === `${namespace}_unsubscribe`)
++              subscriptions.delete(body.params?.[0]);
++            onResponse(response);
++          };
++          requests.set(id, { onResponse: callback, onError });
++          try {
++            socket.request({
++              body: {
++                jsonrpc: '2.0',
++                id,
++                ...body,
++              },
++            });
++          }
++          catch (error) {
++            onError?.(error);
++          }
++        },
++        requestAsync({ body, timeout = 10_000 }) {
++          return withTimeout(() => new Promise((onResponse, onError) => this.request({
++            body,
++            onError,
++            onResponse,
++          })), {
++            errorInstance: new TimeoutError({ body, url }),
++            timeout,
++          });
+         },
+-    });
+-    const [_, [socketClient_]] = await schedule();
+-    return socketClient_;
++        requests,
++        subscriptions,
++        url,
++      };
++      socketClientCache.set(`${key}:${url}`, socketClient);
++      return [socketClient];
++    },
++  });
++  const [_, [socketClient_]] = await schedule();
++  return socketClient_;
+ }
+ //# sourceMappingURL=socket.js.map
+\ No newline at end of file
+diff --git a/_esm/utils/rpc/webSocket.js b/_esm/utils/rpc/webSocket.js
+index 6c3e3c4aa7a3ec3dd3915492bda7ae572d36312b..aeb906b0f22fe5e17646cb8b4b88e40ab0d52046 100644
+--- a/_esm/utils/rpc/webSocket.js
++++ b/_esm/utils/rpc/webSocket.js
+@@ -1,81 +1,82 @@
+ import { SocketClosedError, WebSocketRequestError, } from '../../errors/request.js';
+ import { getSocketRpcClient, } from './socket.js';
+ export async function getWebSocketRpcClient(url, options = {}) {
+-    const { keepAlive, reconnect } = options;
+-    return getSocketRpcClient({
+-        async getSocket({ onClose, onError, onOpen, onResponse }) {
+-            const WebSocket = await import('isows').then((module) => module.WebSocket);
+-            const socket = new WebSocket(url);
+-            function onClose_() {
+-                socket.removeEventListener('close', onClose_);
+-                socket.removeEventListener('message', onMessage);
+-                socket.removeEventListener('error', onError);
+-                socket.removeEventListener('open', onOpen);
+-                onClose();
+-            }
+-            function onMessage({ data }) {
+-                try {
+-                    const _data = JSON.parse(data);
+-                    onResponse(_data);
+-                }
+-                catch (error) {
+-                    onError(error);
+-                }
+-            }
+-            // Setup event listeners for RPC & subscription responses.
+-            socket.addEventListener('close', onClose_);
+-            socket.addEventListener('message', onMessage);
+-            socket.addEventListener('error', onError);
+-            socket.addEventListener('open', onOpen);
+-            // Wait for the socket to open.
+-            if (socket.readyState === WebSocket.CONNECTING) {
+-                await new Promise((resolve, reject) => {
+-                    if (!socket)
+-                        return;
+-                    socket.onopen = resolve;
+-                    socket.onerror = reject;
+-                });
+-            }
+-            const { close: close_ } = socket;
+-            return Object.assign(socket, {
+-                close() {
+-                    close_.bind(socket)();
+-                    onClose_();
+-                },
+-                ping() {
+-                    try {
+-                        if (socket.readyState === socket.CLOSED ||
+-                            socket.readyState === socket.CLOSING)
+-                            throw new WebSocketRequestError({
+-                                url: socket.url,
+-                                cause: new SocketClosedError({ url: socket.url }),
+-                            });
+-                        const body = {
+-                            jsonrpc: '2.0',
+-                            method: 'net_version',
+-                            params: [],
+-                        };
+-                        socket.send(JSON.stringify(body));
+-                    }
+-                    catch (error) {
+-                        onError(error);
+-                    }
+-                },
+-                request({ body }) {
+-                    if (socket.readyState === socket.CLOSED ||
+-                        socket.readyState === socket.CLOSING)
+-                        throw new WebSocketRequestError({
+-                            body,
+-                            url: socket.url,
+-                            cause: new SocketClosedError({ url: socket.url }),
+-                        });
+-                    return socket.send(JSON.stringify(body));
+-                },
++  const { keepAlive, reconnect, namespace } = options;
++  return getSocketRpcClient({
++    async getSocket({ onClose, onError, onOpen, onResponse }) {
++      const WebSocket = await import('isows').then((module) => module.WebSocket);
++      const socket = new WebSocket(url);
++      function onClose_() {
++        socket.removeEventListener('close', onClose_);
++        socket.removeEventListener('message', onMessage);
++        socket.removeEventListener('error', onError);
++        socket.removeEventListener('open', onOpen);
++        onClose();
++      }
++      function onMessage({ data }) {
++        try {
++          const _data = JSON.parse(data);
++          onResponse(_data);
++        }
++        catch (error) {
++          onError(error);
++        }
++      }
++      // Setup event listeners for RPC & subscription responses.
++      socket.addEventListener('close', onClose_);
++      socket.addEventListener('message', onMessage);
++      socket.addEventListener('error', onError);
++      socket.addEventListener('open', onOpen);
++      // Wait for the socket to open.
++      if (socket.readyState === WebSocket.CONNECTING) {
++        await new Promise((resolve, reject) => {
++          if (!socket)
++            return;
++          socket.onopen = resolve;
++          socket.onerror = reject;
++        });
++      }
++      const { close: close_ } = socket;
++      return Object.assign(socket, {
++        close() {
++          close_.bind(socket)();
++          onClose_();
++        },
++        ping() {
++          try {
++            if (socket.readyState === socket.CLOSED ||
++              socket.readyState === socket.CLOSING)
++              throw new WebSocketRequestError({
++                url: socket.url,
++                cause: new SocketClosedError({ url: socket.url }),
++              });
++            const body = {
++              jsonrpc: '2.0',
++              method: 'net_version',
++              params: [],
++            };
++            socket.send(JSON.stringify(body));
++          }
++          catch (error) {
++            onError(error);
++          }
++        },
++        request({ body }) {
++          if (socket.readyState === socket.CLOSED ||
++            socket.readyState === socket.CLOSING)
++            throw new WebSocketRequestError({
++              body,
++              url: socket.url,
++              cause: new SocketClosedError({ url: socket.url }),
+             });
++          return socket.send(JSON.stringify(body));
+         },
+-        keepAlive,
+-        reconnect,
+-        url,
+-    });
++      });
++    },
++    keepAlive,
++    reconnect,
++    url,
++    namespace,
++  });
+ }
+ //# sourceMappingURL=webSocket.js.map
+\ No newline at end of file
+diff --git a/_types/clients/transports/webSocket.d.ts b/_types/clients/transports/webSocket.d.ts
+index 2b1a9f76098400cbc240926ee387307de21211fd..d14db89bdad7a45acb1c4cc3912cfc7f0be72898 100644
+--- a/_types/clients/transports/webSocket.d.ts
++++ b/_types/clients/transports/webSocket.d.ts
+@@ -6,16 +6,17 @@ import type { RpcResponse } from '../../types/rpc.js';
+ import type { SocketRpcClient } from '../../utils/rpc/socket.js';
+ import { type GetWebSocketRpcClientOptions } from '../../utils/rpc/webSocket.js';
+ import { type CreateTransportErrorType, type Transport, type TransportConfig } from './createTransport.js';
+-type WebSocketTransportSubscribeParameters = {
+-    onData: (data: RpcResponse) => void;
++type WebSocketTransportSubscribeParameters<namespace extends string> = {
++    onData: (data: RpcResponse<namespace>) => void;
+     onError?: ((error: any) => void) | undefined;
++    namespace?: namespace | undefined;
+ };
+-type WebSocketTransportSubscribeReturnType = {
++type WebSocketTransportSubscribeReturnType<namespace extends string> = {
+     subscriptionId: Hash;
+-    unsubscribe: () => Promise<RpcResponse<boolean>>;
++    unsubscribe: () => Promise<RpcResponse<namespace, boolean>>;
+ };
+ type WebSocketTransportSubscribe = {
+-    subscribe(args: WebSocketTransportSubscribeParameters & ({
++    subscribe<namespace extends string>(args: WebSocketTransportSubscribeParameters<namespace> & ({
+         params: ['newHeads'];
+     } | {
+         params: ['newPendingTransactions'];
+@@ -29,14 +30,16 @@ type WebSocketTransportSubscribe = {
+         ];
+     } | {
+         params: ['syncing'];
+-    })): Promise<WebSocketTransportSubscribeReturnType>;
++    } | {
++      params: []
++    })): Promise<WebSocketTransportSubscribeReturnType<namespace>>;
+ };
+ export type WebSocketTransportConfig = {
+     /**
+      * Whether or not to send keep-alive ping messages.
+      * @default true
+      */
+-    keepAlive?: GetWebSocketRpcClientOptions['keepAlive'] | undefined;
++    keepAlive?: GetWebSocketRpcClientOptions<string>['keepAlive'] | undefined;
+     /** The key of the WebSocket transport. */
+     key?: TransportConfig['key'] | undefined;
+     /** Methods to include or exclude from executing RPC requests. */
+@@ -47,7 +50,7 @@ export type WebSocketTransportConfig = {
+      * Whether or not to attempt to reconnect on socket failure.
+      * @default true
+      */
+-    reconnect?: GetWebSocketRpcClientOptions['reconnect'] | undefined;
++    reconnect?: GetWebSocketRpcClientOptions<string>['reconnect'] | undefined;
+     /** The max number of times to retry. */
+     retryCount?: TransportConfig['retryCount'] | undefined;
+     /** The base delay (in ms) between retries. */
+@@ -60,7 +63,7 @@ export type WebSocketTransport = Transport<'webSocket', {
+      * @deprecated use `getRpcClient` instead.
+      */
+     getSocket(): Promise<WebSocket>;
+-    getRpcClient(): Promise<SocketRpcClient<WebSocket>>;
++    getRpcClient<namespace extends string>(namespace?: namespace): Promise<SocketRpcClient<WebSocket, namespace>>;
+     subscribe: WebSocketTransportSubscribe['subscribe'];
+ }>;
+ export type WebSocketTransportErrorType = CreateTransportErrorType | UrlRequiredErrorType | ErrorType;
+diff --git a/_types/types/rpc.d.ts b/_types/types/rpc.d.ts
+index 88399f615bef6bd5f5f3ea6c154a882d327471d1..173aeffec0bb24507cdf793d8e428afa98a55590 100644
+--- a/_types/types/rpc.d.ts
++++ b/_types/types/rpc.d.ts
+@@ -50,8 +50,8 @@ type ErrorResult<error> = {
+     result?: undefined;
+     error: error;
+ };
+-type Subscription<result, error> = {
+-    method: 'eth_subscription';
++type Subscription<result, error, namespace extends string> = {
++    method: `${namespace}_subscription`;
+     error?: undefined;
+     result?: undefined;
+     params: {
+@@ -70,10 +70,10 @@ export type RpcRequest = {
+     params?: any | undefined;
+     id?: number | undefined;
+ };
+-export type RpcResponse<result = any, error = any> = {
++export type RpcResponse<namespace extends string, result = any, error = any> = {
+     jsonrpc: `${number}`;
+     id: number;
+-} & (SuccessResult<result> | ErrorResult<error> | Subscription<result, error>);
++} & (SuccessResult<result> | ErrorResult<error> | Subscription<result, error, namespace>);
+ /** A key-value mapping of slot and storage values (supposedly 32 bytes each) */
+ export type RpcStateMapping = {
+     [slots: Hex]: Hex;
+diff --git a/_types/utils/rpc/socket.d.ts b/_types/utils/rpc/socket.d.ts
+index 479e8c6f4cd4942b39e0f9ad74c9bb7633f5e7c1..1a023008fec6439a5d84a6257d04d288bad9a751 100644
+--- a/_types/utils/rpc/socket.d.ts
++++ b/_types/utils/rpc/socket.d.ts
+@@ -7,11 +7,11 @@ type CallbackFn = {
+     onError?: ((error?: Error | Event | undefined) => void) | undefined;
+ };
+ type CallbackMap = Map<Id, CallbackFn>;
+-export type GetSocketParameters = {
++export type GetSocketParameters<namespace extends string> = {
+     onClose: () => void;
+     onError: (error?: Error | Event | undefined) => void;
+     onOpen: () => void;
+-    onResponse: (data: RpcResponse) => void;
++    onResponse: (data: RpcResponse<namespace>) => void;
+ };
+ export type Socket<socket extends {}> = socket & {
+     close(): void;
+@@ -20,24 +20,24 @@ export type Socket<socket extends {}> = socket & {
+         body: RpcRequest;
+     }): void;
+ };
+-export type SocketRpcClient<socket extends {}> = {
++export type SocketRpcClient<socket extends {}, namespace extends string> = {
+     close(): void;
+     socket: Socket<socket>;
+     request(params: {
+         body: RpcRequest;
+         onError?: ((error?: Error | Event | undefined) => void) | undefined;
+-        onResponse: (message: RpcResponse) => void;
++        onResponse: (message: RpcResponse<namespace>) => void;
+     }): void;
+     requestAsync(params: {
+         body: RpcRequest;
+         timeout?: number | undefined;
+-    }): Promise<RpcResponse>;
++    }): Promise<RpcResponse<namespace>>;
+     requests: CallbackMap;
+     subscriptions: CallbackMap;
+     url: string;
+ };
+-export type GetSocketRpcClientParameters<socket extends {} = {}> = {
+-    getSocket(params: GetSocketParameters): Promise<Socket<socket>>;
++export type GetSocketRpcClientParameters<namespace extends string, socket extends {} = {}> = {
++    getSocket(params: GetSocketParameters<namespace>): Promise<Socket<socket>>;
+     /**
+      * Whether or not to send keep-alive messages.
+      * @default true
+@@ -67,6 +67,7 @@ export type GetSocketRpcClientParameters<socket extends {} = {}> = {
+         delay?: number | undefined;
+     } | undefined;
+     url: string;
++    namespace?: namespace;
+ };
+ export type GetSocketRpcClientErrorType = CreateBatchSchedulerErrorType | ErrorType;
+ export declare const socketClientCache: Map<string, SocketRpcClient<{
+@@ -75,7 +76,7 @@ export declare const socketClientCache: Map<string, SocketRpcClient<{
+     request(params: {
+         body: RpcRequest;
+     }): void;
+-}>>;
+-export declare function getSocketRpcClient<socket extends {}>(parameters: GetSocketRpcClientParameters<socket>): Promise<SocketRpcClient<socket>>;
++}, string>>;
++export declare function getSocketRpcClient<socket extends {}, namespace extends string>(parameters: GetSocketRpcClientParameters<namespace, socket>): Promise<SocketRpcClient<socket, namespace>>;
+ export {};
+ //# sourceMappingURL=socket.d.ts.map
+\ No newline at end of file
+diff --git a/_types/utils/rpc/webSocket.d.ts b/_types/utils/rpc/webSocket.d.ts
+index 432c36dd523fccfae689619bb702689ce8679ad6..ff21616c0faaa35edd3f15fee0b4edde18ad88da 100644
+--- a/_types/utils/rpc/webSocket.d.ts
++++ b/_types/utils/rpc/webSocket.d.ts
+@@ -1,4 +1,4 @@
+ import { type GetSocketRpcClientParameters, type SocketRpcClient } from './socket.js';
+-export type GetWebSocketRpcClientOptions = Pick<GetSocketRpcClientParameters, 'keepAlive' | 'reconnect'>;
+-export declare function getWebSocketRpcClient(url: string, options?: GetWebSocketRpcClientOptions | undefined): Promise<SocketRpcClient<WebSocket>>;
++export type GetWebSocketRpcClientOptions<namespace extends string> = Pick<GetSocketRpcClientParameters<namespace>, 'keepAlive' | 'reconnect' | 'namespace'>;
++export declare function getWebSocketRpcClient<namespace extends string>(url: string, options?: GetWebSocketRpcClientOptions<namespace> | undefined): Promise<SocketRpcClient<WebSocket, namespace>>;
+ //# sourceMappingURL=webSocket.d.ts.map
+\ No newline at end of file
+diff --git a/clients/transports/webSocket.ts b/clients/transports/webSocket.ts
+index 36929f2af64ad690c58beade6867ceb2079055ba..4cc5ef942f8691d6072084bb12f11040d7fc6a21 100644
+--- a/clients/transports/webSocket.ts
++++ b/clients/transports/webSocket.ts
+@@ -20,19 +20,20 @@ import {
+   createTransport,
+ } from './createTransport.js'
+ 
+-type WebSocketTransportSubscribeParameters = {
+-  onData: (data: RpcResponse) => void
++type WebSocketTransportSubscribeParameters<namespace extends string> = {
++  namespace?: namespace | undefined
++  onData: (data: RpcResponse<namespace>) => void
+   onError?: ((error: any) => void) | undefined
+ }
+ 
+-type WebSocketTransportSubscribeReturnType = {
++type WebSocketTransportSubscribeReturnType<namespace extends string> = {
+   subscriptionId: Hash
+-  unsubscribe: () => Promise<RpcResponse<boolean>>
++  unsubscribe: () => Promise<RpcResponse<namespace, boolean>>
+ }
+ 
+ type WebSocketTransportSubscribe = {
+-  subscribe(
+-    args: WebSocketTransportSubscribeParameters &
++  subscribe<namespace extends string>(
++    args: WebSocketTransportSubscribeParameters<namespace> &
+       (
+         | {
+             params: ['newHeads']
+@@ -53,7 +54,7 @@ type WebSocketTransportSubscribe = {
+             params: ['syncing']
+           }
+       ),
+-  ): Promise<WebSocketTransportSubscribeReturnType>
++  ): Promise<WebSocketTransportSubscribeReturnType<namespace>>
+ }
+ 
+ export type WebSocketTransportConfig = {
+@@ -61,7 +62,7 @@ export type WebSocketTransportConfig = {
+    * Whether or not to send keep-alive ping messages.
+    * @default true
+    */
+-  keepAlive?: GetWebSocketRpcClientOptions['keepAlive'] | undefined
++  keepAlive?: GetWebSocketRpcClientOptions<string>['keepAlive'] | undefined
+   /** The key of the WebSocket transport. */
+   key?: TransportConfig['key'] | undefined
+   /** Methods to include or exclude from executing RPC requests. */
+@@ -72,7 +73,7 @@ export type WebSocketTransportConfig = {
+    * Whether or not to attempt to reconnect on socket failure.
+    * @default true
+    */
+-  reconnect?: GetWebSocketRpcClientOptions['reconnect'] | undefined
++  reconnect?: GetWebSocketRpcClientOptions<string>['reconnect'] | undefined
+   /** The max number of times to retry. */
+   retryCount?: TransportConfig['retryCount'] | undefined
+   /** The base delay (in ms) between retries. */
+@@ -88,7 +89,7 @@ export type WebSocketTransport = Transport<
+      * @deprecated use `getRpcClient` instead.
+      */
+     getSocket(): Promise<WebSocket>
+-    getRpcClient(): Promise<SocketRpcClient<WebSocket>>
++    getRpcClient<namespace extends string>(namespace?: namespace): Promise<SocketRpcClient<WebSocket, namespace>>
+     subscribe: WebSocketTransportSubscribe['subscribe']
+   }
+ >
+@@ -149,16 +150,22 @@ export function webSocket(
+         getSocket() {
+           return getSocket(url_)
+         },
+-        getRpcClient() {
+-          return getWebSocketRpcClient(url_, wsRpcClientOpts)
++        getRpcClient(namespace) {
++          return getWebSocketRpcClient(url_, {
++            ...wsRpcClientOpts,
++            namespace: namespace ?? 'eth' as any,
++          })
+         },
+-        async subscribe({ params, onData, onError }: any) {
+-          const rpcClient = await getWebSocketRpcClient(url_, wsRpcClientOpts)
++        async subscribe({ params, onData, onError, namespace = 'eth'}: any) {
++          const rpcClient = await getWebSocketRpcClient(url_, {
++            ...wsRpcClientOpts,
++            namespace,
++          })
+           const { result: subscriptionId } = await new Promise<any>(
+             (resolve, reject) =>
+               rpcClient.request({
+                 body: {
+-                  method: 'eth_subscribe',
++                  method: `${namespace}_subscribe`,
+                   params,
+                 },
+                 onError(error) {
+@@ -177,7 +184,7 @@ export function webSocket(
+                     resolve(response)
+                     return
+                   }
+-                  if (response.method !== 'eth_subscription') return
++                  if (response.method !== `${namespace}_subscription`) return
+                   onData(response.params)
+                 },
+               }),
+@@ -188,7 +195,7 @@ export function webSocket(
+               return new Promise<any>((resolve) =>
+                 rpcClient.request({
+                   body: {
+-                    method: 'eth_unsubscribe',
++                    method: `${namespace}_unsubscribe`,
+                     params: [subscriptionId],
+                   },
+                   onResponse: resolve,
+diff --git a/types/rpc.ts b/types/rpc.ts
+index 2bcab2cc54550fc2bcf4eee4f2048151ae271b7b..e1f73694b6fa19329a2cd305d7a471ec951fb719 100644
+--- a/types/rpc.ts
++++ b/types/rpc.ts
+@@ -115,8 +115,8 @@ type ErrorResult<error> = {
+   result?: undefined
+   error: error
+ }
+-type Subscription<result, error> = {
+-  method: 'eth_subscription'
++type Subscription<result, error, namespace extends string> = {
++  method: `${namespace}_subscription`
+   error?: undefined
+   result?: undefined
+   params:
+@@ -139,10 +139,10 @@ export type RpcRequest = {
+   id?: number | undefined
+ }
+ 
+-export type RpcResponse<result = any, error = any> = {
++export type RpcResponse<namespace extends string, result = any, error = any> = {
+   jsonrpc: `${number}`
+   id: number
+-} & (SuccessResult<result> | ErrorResult<error> | Subscription<result, error>)
++} & (SuccessResult<result> | ErrorResult<error> | Subscription<result, error, namespace>)
+ 
+ /** A key-value mapping of slot and storage values (supposedly 32 bytes each) */
+ export type RpcStateMapping = {
+diff --git a/utils/rpc/socket.ts b/utils/rpc/socket.ts
+index bebbfecd6a807dbeb1834d698af63501804f2382..f8e7f51820a560a8f05ed86761a2d150ceac8011 100644
+--- a/utils/rpc/socket.ts
++++ b/utils/rpc/socket.ts
+@@ -15,11 +15,11 @@ type CallbackFn = {
+ }
+ type CallbackMap = Map<Id, CallbackFn>
+ 
+-export type GetSocketParameters = {
++export type GetSocketParameters<namespace extends string> = {
+   onClose: () => void
+   onError: (error?: Error | Event | undefined) => void
+   onOpen: () => void
+-  onResponse: (data: RpcResponse) => void
++  onResponse: (data: RpcResponse<namespace>) => void
+ }
+ 
+ export type Socket<socket extends {}> = socket & {
+@@ -28,25 +28,25 @@ export type Socket<socket extends {}> = socket & {
+   request(params: { body: RpcRequest }): void
+ }
+ 
+-export type SocketRpcClient<socket extends {}> = {
++export type SocketRpcClient<socket extends {}, namespace extends string> = {
+   close(): void
+   socket: Socket<socket>
+   request(params: {
+     body: RpcRequest
+     onError?: ((error?: Error | Event | undefined) => void) | undefined
+-    onResponse: (message: RpcResponse) => void
++    onResponse: (message: RpcResponse<namespace>) => void
+   }): void
+   requestAsync(params: {
+     body: RpcRequest
+     timeout?: number | undefined
+-  }): Promise<RpcResponse>
++  }): Promise<RpcResponse<namespace>>
+   requests: CallbackMap
+   subscriptions: CallbackMap
+   url: string
+ }
+ 
+-export type GetSocketRpcClientParameters<socket extends {} = {}> = {
+-  getSocket(params: GetSocketParameters): Promise<Socket<socket>>
++export type GetSocketRpcClientParameters<namespace extends string, socket extends {} = {}> = {
++  getSocket(params: GetSocketParameters<namespace>): Promise<Socket<socket>>
+   /**
+    * Whether or not to send keep-alive messages.
+    * @default true
+@@ -82,6 +82,7 @@ export type GetSocketRpcClientParameters<socket extends {} = {}> = {
+       }
+     | undefined
+   url: string
++  namespace?: namespace
+ }
+ 
+ export type GetSocketRpcClientErrorType =
+@@ -90,18 +91,19 @@ export type GetSocketRpcClientErrorType =
+ 
+ export const socketClientCache = /*#__PURE__*/ new Map<
+   string,
+-  SocketRpcClient<Socket<{}>>
++  SocketRpcClient<Socket<{}>, string>
+ >()
+ 
+-export async function getSocketRpcClient<socket extends {}>(
+-  parameters: GetSocketRpcClientParameters<socket>,
+-): Promise<SocketRpcClient<socket>> {
++export async function getSocketRpcClient<socket extends {}, namespace extends string>(
++  parameters: GetSocketRpcClientParameters<namespace, socket>,
++): Promise<SocketRpcClient<socket, namespace>> {
+   const {
+     getSocket,
+     keepAlive = true,
+     key = 'socket',
+     reconnect = true,
+     url,
++    namespace
+   } = parameters
+   const { interval: keepAliveInterval = 30_000 } =
+     typeof keepAlive === 'object' ? keepAlive : {}
+@@ -111,12 +113,12 @@ export async function getSocketRpcClient<socket extends {}>(
+   let socketClient = socketClientCache.get(`${key}:${url}`)
+ 
+   // If the socket already exists, return it.
+-  if (socketClient) return socketClient as {} as SocketRpcClient<socket>
++  if (socketClient) return socketClient as {} as SocketRpcClient<socket, namespace>
+ 
+   let reconnectCount = 0
+   const { schedule } = createBatchScheduler<
+     undefined,
+-    [SocketRpcClient<socket>]
++    [SocketRpcClient<socket, namespace>]
+   >({
+     id: `${key}:${url}`,
+     fn: async () => {
+@@ -180,7 +182,7 @@ export async function getSocketRpcClient<socket extends {}>(
+             reconnectCount = 0
+           },
+           onResponse(data) {
+-            const isSubscription = data.method === 'eth_subscription'
++            const isSubscription = 'params' in data
+             const id = isSubscription ? data.params.subscription : data.id
+             const cache = isSubscription ? subscriptions : requests
+             const callback = cache.get(id)
+@@ -216,13 +218,13 @@ export async function getSocketRpcClient<socket extends {}>(
+ 
+           const id = body.id ?? idCache.take()
+ 
+-          const callback = (response: RpcResponse) => {
++          const callback = (response: RpcResponse<namespace>) => {
+             if (typeof response.id === 'number' && id !== response.id) return
+ 
+             // If we are subscribing to a topic, we want to set up a listener for incoming
+             // messages.
+             if (
+-              body.method === 'eth_subscribe' &&
++              body.method === `${namespace}_subscribe` &&
+               typeof response.result === 'string'
+             )
+               subscriptions.set(response.result, {
+@@ -231,7 +233,7 @@ export async function getSocketRpcClient<socket extends {}>(
+               })
+ 
+             // If we are unsubscribing from a topic, we want to remove the listener.
+-            if (body.method === 'eth_unsubscribe')
++            if (body.method === `${namespace}_unsubscribe`)
+               subscriptions.delete(body.params?.[0])
+ 
+             onResponse(response)
+@@ -253,7 +255,7 @@ export async function getSocketRpcClient<socket extends {}>(
+         requestAsync({ body, timeout = 10_000 }) {
+           return withTimeout(
+             () =>
+-              new Promise<RpcResponse>((onResponse, onError) =>
++              new Promise<RpcResponse<namespace>>((onResponse, onError) =>
+                 this.request({
+                   body,
+                   onError,
+@@ -272,7 +274,7 @@ export async function getSocketRpcClient<socket extends {}>(
+       }
+       socketClientCache.set(`${key}:${url}`, socketClient)
+ 
+-      return [socketClient as {} as SocketRpcClient<socket>]
++      return [socketClient as {} as SocketRpcClient<socket, namespace>]
+     },
+   })
+ 
+diff --git a/utils/rpc/webSocket.ts b/utils/rpc/webSocket.ts
+index 7ab95e4f484e3e7082c2cd65dbe0b4a182b868f9..a176d2e3a186ecfe0b3e80efb0305a2b93ce27f9 100644
+--- a/utils/rpc/webSocket.ts
++++ b/utils/rpc/webSocket.ts
+@@ -12,16 +12,16 @@ import {
+   getSocketRpcClient,
+ } from './socket.js'
+ 
+-export type GetWebSocketRpcClientOptions = Pick<
+-  GetSocketRpcClientParameters,
+-  'keepAlive' | 'reconnect'
++export type GetWebSocketRpcClientOptions<namespace extends string> = Pick<
++  GetSocketRpcClientParameters<namespace>,
++  'keepAlive' | 'reconnect' | 'namespace'
+ >
+ 
+-export async function getWebSocketRpcClient(
++export async function getWebSocketRpcClient<namespace extends string>(
+   url: string,
+-  options: GetWebSocketRpcClientOptions | undefined = {},
+-): Promise<SocketRpcClient<WebSocket>> {
+-  const { keepAlive, reconnect } = options
++  options: GetWebSocketRpcClientOptions<namespace> | undefined = {},
++): Promise<SocketRpcClient<WebSocket, namespace>> {
++  const { keepAlive, reconnect, namespace } = options
+ 
+   return getSocketRpcClient({
+     async getSocket({ onClose, onError, onOpen, onResponse }) {
+@@ -105,5 +105,6 @@ export async function getWebSocketRpcClient(
+     keepAlive,
+     reconnect,
+     url,
++    namespace
+   })
+ }
