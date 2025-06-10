@@ -1,10 +1,10 @@
-import type { Account, Chain, Client, RpcSchema, Transport } from 'viem'
 import {
   sendRawTransactionSync,
   type SendRawTransactionSyncParameters,
   type SendRawTransactionSyncReturnType,
-} from '../../actions/shred/sendRawTransactionSync'
-import type { ShredRpcSchema } from '../../types/rpcSchema'
+} from '../../actions/shred/SendRawTransactionSync'
+import type { ShredRpcSchema } from '../../types/RpcSchema'
+import type { Account, Chain, Client, RpcSchema, Transport } from 'viem'
 
 export type ShredActions<chain extends Chain | undefined = Chain | undefined> =
   {

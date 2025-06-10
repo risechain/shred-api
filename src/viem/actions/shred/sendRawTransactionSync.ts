@@ -1,3 +1,4 @@
+import type { ShredRpcSchema } from '../../types/RpcSchema'
 import type {
   Account,
   Chain,
@@ -6,7 +7,6 @@ import type {
   TransactionSerializedGeneric,
   Transport,
 } from 'viem'
-import type { ShredRpcSchema } from '../../types/rpcSchema'
 
 export type SendRawTransactionSyncParameters = {
   serializedTransaction: TransactionSerializedGeneric
@@ -15,7 +15,7 @@ export type SendRawTransactionSyncParameters = {
 export type SendRawTransactionSyncReturnType<chain extends Chain | undefined> =
   FormattedTransactionReceipt<chain>
 
-export async function sendRawTransactionSync<
+export function sendRawTransactionSync<
   chain extends Chain | undefined,
   account extends Account | undefined = undefined,
 >(
