@@ -1,4 +1,4 @@
-import type { ShredRpcSchema } from '../../types/RpcSchema'
+import type { ShredRpcSchema } from '../../types/rpcSchema'
 import type {
   Account,
   Chain,

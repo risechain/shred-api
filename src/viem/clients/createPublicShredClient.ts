@@ -11,8 +11,8 @@ import {
   type RpcSchema,
   type Transport,
 } from 'viem'
-import type { ShredRpcSchema } from '../types/RpcSchema'
-import { shredActions, type ShredActions } from './decorators/Shred'
+import type { ShredRpcSchema } from '../types/rpcSchema'
+import { shredActions, type ShredActions } from './decorators/shred'
 
 export type PublicShredClient<
   transport extends Transport = Transport,

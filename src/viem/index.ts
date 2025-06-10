@@ -1,11 +1,15 @@
-export type { ShredRpcSchema } from './types/RpcSchema'
+export type { ShredRpcSchema } from './types/rpcSchema'
 export {
   createPublicShredClient,
   type PublicShredClient,
-} from './clients/CreatePublicShredClient'
-export { shredActions, type ShredActions } from './clients/decorators/Shred'
+} from './clients/createPublicShredClient'
+export { shredActions, type ShredActions } from './clients/decorators/shred'
 export {
   sendRawTransactionSync,
   type SendRawTransactionSyncParameters,
   type SendRawTransactionSyncReturnType,
-} from './actions/shred/SendRawTransactionSync'
+} from './actions/shred/sendRawTransactionSync'
+export {
+  type WatchShredsParameters,
+  watchShreds,
+} from './actions/shred/watchShreds'
