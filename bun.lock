@@ -3,6 +3,9 @@
   "workspaces": {
     "": {
       "name": "tsdown-starter",
+      "dependencies": {
+        "isows": "^1.0.7",
+      },
       "devDependencies": {
         "@sxzz/eslint-config": "^7.0.2",
         "@sxzz/prettier-config": "^2.2.1",

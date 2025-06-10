@@ -7,10 +7,13 @@ import {
   type WebSocketTransportConfig,
 } from 'viem'
 import type { ShredsRpcResponse } from '../../types/rpc'
-import { getWebSocketRpcClient } from 'viem/utils'
+import { getWebSocketRpcClient } from '../../utils/rpc/webSocket'
+import { watchBlocks } from 'viem/actions'
+
+watchBlocks
 
 type ShredsWebSocketTransportSubscribeParameters = {
-  onData: (data: ShredsRpcResponse) => void
+  onData: (data: ShredsRpcResponse['params']) => void
   onError?: ((error: any) => void) | undefined
 }
 
@@ -21,7 +24,15 @@ type ShredsWebSocketTransportSubscribeReturnType = {
 
 type ShredsWebSocketTransportSubscribe = {
   riseSubscribe(
-    args: ShredsWebSocketTransportSubscribeParameters,
+    args: ShredsWebSocketTransportSubscribeParameters &
+      (
+        | {
+            params: []
+          }
+        | {
+            params: ['logs']
+          }
+      ),
   ): Promise<ShredsWebSocketTransportSubscribeReturnType>
 }
 
@@ -56,15 +67,54 @@ export function shredsWebSocket(
             getSocket: ws_.value.getSocket,
             getRpcClient: ws_.value.getRpcClient,
             subscribe: ws_.value.subscribe,
-            riseSubscribe: async ({
-              onData,
-              onError,
-            }: ShredsWebSocketTransportSubscribeParameters): Promise<ShredsWebSocketTransportSubscribeReturnType> => {
-              // TODO: create a custom implementation of webSocketRpcClient for rise_subscribe
+            async riseSubscribe({ params, onData, onError }) {
               const rpcClient = await getWebSocketRpcClient(
                 url_,
                 wsRpcClientOpts,
               )
+              const { result: subscriptionId } = await new Promise<any>(
+                (resolve, reject) =>
+                  rpcClient.request({
+                    body: {
+                      method: 'rise_subscribe',
+                      params,
+                    },
+                    onError(error) {
+                      reject(error)
+                      onError?.(error)
+                      return
+                    },
+                    onResponse(response) {
+                      if (response.error) {
+                        reject(response.error)
+                        onError?.(response.error)
+                        return
+                      }
+
+                      if (typeof response.id === 'number') {
+                        resolve(response)
+                        return
+                      }
+                      if (response.method !== 'rise_subscription') return
+
+                      onData(response.params)
+                    },
+                  }),
+              )
+              return {
+                subscriptionId,
+                async unsubscribe() {
+                  return new Promise<any>((resolve) =>
+                    rpcClient.request({
+                      body: {
+                        method: 'rise_unsubscribe',
+                        params: [subscriptionId],
+                      },
+                      onResponse: resolve,
+                    }),
+                  )
+                },
+              }
             },
           }
         : undefined,

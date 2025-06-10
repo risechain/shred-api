@@ -2,11 +2,13 @@ type SuccessResult<result> = {
   method?: undefined
   result: result
   error?: undefined
+  params?: undefined
 }
 type ErrorResult<error> = {
   method?: undefined
   result?: undefined
   error: error
+  params?: undefined
 }
 type Subscription<result, error> = {
   method: 'rise_subscription'
