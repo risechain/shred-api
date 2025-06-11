@@ -1,16 +1,15 @@
 import {
   UrlRequiredError,
   webSocket,
+  type Address,
   type Hash,
+  type LogTopic,
   type Transport,
   type WebSocketTransport,
   type WebSocketTransportConfig,
 } from 'viem'
-import type { ShredsRpcResponse } from '../../types/rpc'
 import { getWebSocketRpcClient } from '../../utils/rpc/webSocket'
-import { watchBlocks } from 'viem/actions'
-
-watchBlocks
+import type { ShredsRpcResponse } from '../../types/rpc'
 
 type ShredsWebSocketTransportSubscribeParameters = {
   onData: (data: ShredsRpcResponse['params']) => void
@@ -23,17 +22,23 @@ type ShredsWebSocketTransportSubscribeReturnType = {
 }
 
 type ShredsWebSocketTransportSubscribe = {
-  riseSubscribe(
+  riseSubscribe: (
     args: ShredsWebSocketTransportSubscribeParameters &
       (
         | {
             params: []
           }
         | {
-            params: ['logs']
+            params: [
+              'logs',
+              {
+                address?: Address | Address[]
+                topics?: LogTopic[]
+              },
+            ]
           }
       ),
-  ): Promise<ShredsWebSocketTransportSubscribeReturnType>
+  ) => Promise<ShredsWebSocketTransportSubscribeReturnType>
 }
 
 export type ShredsWebSocketTransport =
@@ -103,7 +108,7 @@ export function shredsWebSocket(
               )
               return {
                 subscriptionId,
-                async unsubscribe() {
+                unsubscribe() {
                   return new Promise<any>((resolve) =>
                     rpcClient.request({
                       body: {

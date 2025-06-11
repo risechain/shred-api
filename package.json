@@ -12,6 +12,7 @@
     "@sxzz/eslint-config": "^7.0.2",
     "@sxzz/prettier-config": "^2.2.1",
     "@types/node": "^22.15.30",
+    "abitype": "^1.0.8",
     "bumpp": "^10.1.1",
     "eslint": "^9.28.0",
     "happy-dom": "^17.6.3",

@@ -9,13 +9,13 @@ import {
   type PublicClientConfig,
   type PublicRpcSchema,
   type RpcSchema,
-  type Transport,
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
 import { shredActions, type ShredActions } from './decorators/shred'
+import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
 export type PublicShredClient<
-  transport extends Transport = Transport,
+  transport extends ShredsWebSocketTransport = ShredsWebSocketTransport,
   chain extends Chain | undefined = Chain | undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends RpcSchema | undefined = undefined,
@@ -32,7 +32,7 @@ export type PublicShredClient<
 >
 
 export function createPublicShredClient<
-  transport extends Transport,
+  transport extends ShredsWebSocketTransport,
   chain extends Chain | undefined = undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends [...RpcSchema, ...ShredRpcSchema] | undefined = undefined,

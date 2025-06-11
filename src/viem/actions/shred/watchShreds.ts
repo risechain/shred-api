@@ -1,5 +1,5 @@
-import { type Chain, type Client } from 'viem'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
+import type { Chain, Client } from 'viem'
 
 export interface WatchShredsParameters {
   onShred: () => void
@@ -22,7 +22,7 @@ export function watchShreds<
       const { unsubscribe: unsubscribe_ } =
         await client.transport.riseSubscribe({
           params: [],
-          onData: (data) => {
+          onData: () => {
             if (!active) return
           },
           onError: (error) => {
