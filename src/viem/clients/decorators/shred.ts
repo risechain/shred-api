@@ -25,11 +25,29 @@ import type {
   RpcSchema,
 } from 'viem'
 
+/**
+ * Actions for interacting with Shreds on the RISE network, enabling real-time
+ * transaction confirmation by processing blocks in smaller, instantly confirmed units.
+ */
 export type ShredActions<chain extends Chain | undefined = Chain | undefined> =
   {
+    /**
+     * Sends a raw transaction to the RISE network, where it is processed as a shred,
+     * and waits for its real-time confirmation.
+     *
+     * @param parameters - {@link SendRawTransactionSyncParameters}
+     * @returns The transaction hash. {@link SendRawTransactionSyncReturnType}
+     */
     sendRawTransactionSync: (
       parameters: SendRawTransactionSyncParameters,
     ) => Promise<SendRawTransactionSyncReturnType<chain>>
+    /**
+     * Watches and returns emitted contract events that have been processed and confirmed as shreds
+     * on the RISE network.
+     *
+     * @param parameters - {@link WatchContractShredEventParameters}
+     * @returns A function that can be used to unsubscribe from the event. {@link WatchContractShredEventReturnType}
+     */
     watchContractShredEvent: <
       const abi_ extends Abi | readonly unknown[],
       eventName_ extends ContractEventName<abi_> | undefined = undefined,
@@ -37,6 +55,13 @@ export type ShredActions<chain extends Chain | undefined = Chain | undefined> =
     >(
       parameters: WatchContractShredEventParameters<abi_, eventName_, strict>,
     ) => WatchContractShredEventReturnType
+    /**
+     * Watches and returns emitted events that have been processed and confirmed as shreds
+     * on the RISE network.
+     *
+     * @param parameters - {@link WatchShredEventParameters}
+     * @returns A function that can be used to unsubscribe from the event. {@link WatchShredEventReturnType}
+     */
     watchShredEvent: <
       const abiEvent extends AbiEvent | undefined = undefined,
       const abiEvents extends
