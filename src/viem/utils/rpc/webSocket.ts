@@ -1,20 +1,20 @@
-import type { MessageEvent } from 'isows'
 import { SocketClosedError, WebSocketRequestError } from 'viem'
-
 import type { RpcRequest } from '../../types/rpc'
+
 import {
   getSocketRpcClient,
   type GetSocketRpcClientParameters,
   type Socket,
   type SocketRpcClient,
 } from './socket'
+import type { MessageEvent } from 'isows'
 
 export type GetWebSocketRpcClientOptions = Pick<
   GetSocketRpcClientParameters,
   'keepAlive' | 'reconnect'
 >
 
-export async function getWebSocketRpcClient(
+export function getWebSocketRpcClient(
   url: string,
   options: GetWebSocketRpcClientOptions | undefined = {},
 ): Promise<SocketRpcClient<WebSocket>> {
@@ -51,8 +51,15 @@ export async function getWebSocketRpcClient(
       if (socket.readyState === WebSocket.CONNECTING) {
         await new Promise((resolve, reject) => {
           if (!socket) return
-          socket.onopen = resolve
-          socket.onerror = reject
+          socket.addEventListener('open', resolve)
+          socket.addEventListener('error', (error) => {
+            reject(
+              new WebSocketRequestError({
+                url: socket.url,
+                cause: error as unknown as Error,
+              }),
+            )
+          })
         })
       }
 

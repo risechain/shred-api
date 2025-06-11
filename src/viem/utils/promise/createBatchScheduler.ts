@@ -1,5 +1,5 @@
 import type { ErrorType } from '../../errors/utils.js'
-import { type PromiseWithResolvers, withResolvers } from './withResolvers'
+import { withResolvers, type PromiseWithResolvers } from './withResolvers'
 
 type Resolved<returnType extends readonly unknown[] = any> = [
   result: returnType[number],
@@ -53,7 +53,7 @@ export function createBatchScheduler<
   parameters,
   returnType
 >): CreateBatchSchedulerReturnType<parameters, returnType> {
-  const exec = async () => {
+  const exec = () => {
     const scheduler = getScheduler()
     flush()
 
@@ -64,15 +64,13 @@ export function createBatchScheduler<
     fn(args as parameters[])
       .then((data) => {
         if (sort && Array.isArray(data)) data.sort(sort)
-        for (let i = 0; i < scheduler.length; i++) {
-          const { resolve } = scheduler[i]
+        for (const [i, { resolve }] of scheduler.entries()) {
           resolve?.([data[i], data])
         }
       })
-      .catch((err) => {
-        for (let i = 0; i < scheduler.length; i++) {
-          const { reject } = scheduler[i]
-          reject?.(err)
+      .catch((error) => {
+        for (const { reject } of scheduler) {
+          reject?.(error)
         }
       })
   }
@@ -89,7 +87,7 @@ export function createBatchScheduler<
 
   return {
     flush,
-    async schedule(args: parameters) {
+    schedule(args: parameters) {
       const { promise, resolve, reject } = withResolvers()
 
       const split = shouldSplitBatch?.([...getBatchedArgs(), args])

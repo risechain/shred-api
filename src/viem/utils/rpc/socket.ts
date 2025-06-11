@@ -1,10 +1,10 @@
 import { SocketClosedError, TimeoutError, withTimeout } from 'viem'
-import type { RpcRequest, ShredsRpcResponse } from '../../types/rpc'
-import type { ErrorType } from '../../errors/utils'
 import {
   createBatchScheduler,
   type CreateBatchSchedulerErrorType,
 } from '../promise/createBatchScheduler'
+import type { ErrorType } from '../../errors/utils'
+import type { RpcRequest, ShredsRpcResponse } from '../../types/rpc'
 import { idCache } from './id'
 
 type Id = string | number
@@ -22,30 +22,30 @@ export type GetSocketParameters = {
 }
 
 export type Socket<socket extends {}> = socket & {
-  close(): void
+  close: () => void
   ping?: (() => void) | undefined
-  request(params: { body: RpcRequest }): void
+  request: (params: { body: RpcRequest }) => void
 }
 
 export type SocketRpcClient<socket extends {}> = {
-  close(): void
+  close: () => void
   socket: Socket<socket>
-  request(params: {
+  request: (params: {
     body: RpcRequest
     onError?: ((error?: Error | Event | undefined) => void) | undefined
     onResponse: (message: ShredsRpcResponse) => void
-  }): void
-  requestAsync(params: {
+  }) => void
+  requestAsync: (params: {
     body: RpcRequest
     timeout?: number | undefined
-  }): Promise<ShredsRpcResponse>
+  }) => Promise<ShredsRpcResponse>
   requests: CallbackMap
   subscriptions: CallbackMap
   url: string
 }
 
 export type GetSocketRpcClientParameters<socket extends {} = {}> = {
-  getSocket(params: GetSocketParameters): Promise<Socket<socket>>
+  getSocket: (params: GetSocketParameters) => Promise<Socket<socket>>
   /**
    * Whether or not to send keep-alive messages.
    * @default true
@@ -275,6 +275,6 @@ export async function getSocketRpcClient<socket extends {}>(
     },
   })
 
-  const [_, [socketClient_]] = await schedule()
+  const [, [socketClient_]] = await schedule()
   return socketClient_
 }

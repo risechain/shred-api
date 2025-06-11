@@ -1,50 +1,34 @@
 {
   "name": "shred-api",
   "version": "0.1.0",
-  "author": "risechain team",
+  "packageManager": "bun@1.2.15",
+  "description": "Shreds client for the Rise Network.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/risechain/shred-api#readme",
+  "bugs": {
+    "url": "https://github.com/risechain/shred-api/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/risechain/shred-api.git"
   },
+  "author": "risechain team",
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "devDependencies": {
-    "@sxzz/eslint-config": "^7.0.2",
-    "@sxzz/prettier-config": "^2.2.1",
-    "@types/node": "^22.15.30",
-    "abitype": "^1.0.8",
-    "bumpp": "^10.1.1",
-    "eslint": "^9.28.0",
-    "happy-dom": "^17.6.3",
-    "prettier": "^3.5.3",
-    "tsdown": "^0.12.7",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.2"
-  },
-  "peerDependencies": {
-    "viem": "^2.31.0"
-  },
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
     "./package.json": "./package.json",
     "./viem": {
       "types": "./dist/viem/index.d.ts",
-      "import": "./dist/viem/index.js",
-      "require": "./dist/viem/index.js"
+      "require": "./dist/viem/index.js",
+      "import": "./dist/viem/index.js"
     }
   },
-  "bugs": {
-    "url": "https://github.com/risechain/shred-api/issues"
-  },
-  "description": "Shreds client for the Rise Network.",
-  "files": [
-    "dist"
-  ],
-  "homepage": "https://github.com/risechain/shred-api#readme",
-  "license": "MIT",
-  "packageManager": "bun@1.2.15",
-  "prettier": "@sxzz/prettier-config",
   "publishConfig": {
     "access": "public"
   },
@@ -59,12 +43,28 @@
     "release": "bumpp && bun publish",
     "prepublishOnly": "bun run build"
   },
-  "trustedDependencies": [
-    "unrs-resolver"
-  ],
-  "type": "module",
-  "types": "./dist/index.d.ts",
+  "peerDependencies": {
+    "viem": "^2.31.0"
+  },
   "dependencies": {
     "isows": "^1.0.7"
-  }
+  },
+  "devDependencies": {
+    "@sxzz/eslint-config": "^7.0.2",
+    "@sxzz/prettier-config": "^2.2.1",
+    "@types/node": "^22.15.30",
+    "abitype": "^1.0.8",
+    "bumpp": "^10.1.1",
+    "eslint": "^9.28.0",
+    "happy-dom": "^17.6.3",
+    "prettier": "^3.5.3",
+    "tsdown": "^0.12.7",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2"
+  },
+  "prettier": "@sxzz/prettier-config",
+  "trustedDependencies": [
+    "unrs-resolver"
+  ]
 }
