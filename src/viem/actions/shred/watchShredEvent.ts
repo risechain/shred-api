@@ -16,6 +16,9 @@ import {
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
 
+/**
+ * The parameter for the `onLogs` callback in {@link watchShredEvent}.
+ */
 export type WatchShredEventOnLogsParameter<
   abiEvent extends AbiEvent | undefined = undefined,
   abiEvents extends
@@ -26,6 +29,9 @@ export type WatchShredEventOnLogsParameter<
   eventName extends string | undefined = MaybeAbiEventName<abiEvent>,
 > = ShredLog<bigint, number, abiEvent, strict, abiEvents, eventName>[]
 
+/**
+ * The callback function for when new event logs are received in {@link watchShredEvent}.
+ */
 export type WatchShredEventOnLogsFn<
   abiEvent extends AbiEvent | undefined = undefined,
   abiEvents extends
@@ -39,6 +45,9 @@ export type WatchShredEventOnLogsFn<
   logs: WatchShredEventOnLogsParameter<abiEvent, abiEvents, strict, _eventName>,
 ) => void
 
+/**
+ * Parameters for {@link watchShredEvent}.
+ */
 export type WatchShredEventParameters<
   abiEvent extends AbiEvent | undefined = undefined,
   abiEvents extends
@@ -84,8 +93,19 @@ export type WatchShredEventParameters<
     }
 )
 
+/**
+ * Return type for {@link watchShredEvent}.
+ */
 export type WatchShredEventReturnType = () => void
 
+/**
+ * Watches and returns emitted events that have been processed and confirmed as shreds
+ * on the RISE network.
+ *
+ * @param client - Client to use.
+ * @param parameters - {@link WatchShredEventParameters}
+ * @returns A function that can be used to unsubscribe from the event. {@link WatchShredEventReturnType}
+ */
 export function watchShredEvent<
   chain extends Chain | undefined,
   const abiEvent extends AbiEvent | undefined = undefined,

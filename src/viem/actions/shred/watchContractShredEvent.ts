@@ -15,6 +15,9 @@ import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWe
 import type { ShredLog } from '../../types/log'
 import type { Abi, Address, ExtractAbiEvent } from 'abitype'
 
+/**
+ * The parameter for the `onLogs` callback in {@link watchContractShredEvent}.
+ */
 export type WatchContractShredEventOnLogsParameter<
   abi extends Abi | readonly unknown[] = Abi,
   eventName extends ContractEventName<abi> = ContractEventName<abi>,
@@ -25,6 +28,9 @@ export type WatchContractShredEventOnLogsParameter<
     : ShredLog<bigint, number, ExtractAbiEvent<abi, eventName>, strict>[]
   : ShredLog[]
 
+/**
+ * The callback function for when new contract event logs are received in {@link watchContractShredEvent}.
+ */
 export type WatchContractShredEventOnLogsFn<
   abi extends Abi | readonly unknown[] = Abi,
   eventName extends ContractEventName<abi> = ContractEventName<abi>,
@@ -33,6 +39,9 @@ export type WatchContractShredEventOnLogsFn<
   logs: WatchContractShredEventOnLogsParameter<abi, eventName, strict>,
 ) => void
 
+/**
+ * Parameters for {@link watchContractShredEvent}.
+ */
 export type WatchContractShredEventParameters<
   abi extends Abi | readonly unknown[] = Abi,
   eventName extends ContractEventName<abi> | undefined = ContractEventName<abi>,
@@ -69,8 +78,19 @@ export type WatchContractShredEventParameters<
   strict?: strict | boolean | undefined
 }
 
+/**
+ * Return type for {@link watchContractShredEvent}.
+ */
 export type WatchContractShredEventReturnType = () => void
 
+/**
+ * Watches and returns emitted contract events that have been processed and confirmed as shreds
+ * on the RISE network.
+ *
+ * @param client - Client to use.
+ * @param parameters - {@link WatchContractShredEventParameters}
+ * @returns A function that can be used to unsubscribe from the event. {@link WatchContractShredEventReturnType}
+ */
 export function watchContractShredEvent<
   chain extends Chain | undefined,
   const abi_ extends Abi | readonly unknown[],
