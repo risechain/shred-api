@@ -1,15 +1,19 @@
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { Chain, Client } from 'viem'
+import type { RpcShred, Shred } from '../../types/shred'
+import { formatShred } from '../../utils/formatters/shred'
 
 /**
  * Parameters for {@link watchShreds}.
  */
 export interface WatchShredsParameters {
   /** The callback to call when a new shred is received. */
-  onShred: () => void
+  onShred: (shred: Shred) => void
   /** The callback to call when an error occurred when trying to get for a new shred. */
   onError?: ((error: Error) => void) | undefined
 }
+
+export type WatchShredsReturnType = () => void
 
 /**
  * Watches for new shreds on the RISE network.
@@ -23,7 +27,7 @@ export function watchShreds<
   transport extends ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
-  parameters: WatchShredsParameters,
+  { onShred, onError }: WatchShredsParameters,
 ): () => void {
   const subscribeShreds = () => {
     let active = true
@@ -34,11 +38,15 @@ export function watchShreds<
       const { unsubscribe: unsubscribe_ } =
         await client.transport.riseSubscribe({
           params: [],
-          onData: () => {
+          onData: (data: any) => {
             if (!active) return
+
+            const shred: RpcShred = data.result
+
+            onShred(formatShred(shred))
           },
           onError: (error) => {
-            parameters.onError?.(error)
+            onError?.(error)
           },
         })
       unsubscribe = unsubscribe_

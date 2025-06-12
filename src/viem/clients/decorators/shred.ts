@@ -13,6 +13,11 @@ import {
   type WatchShredEventParameters,
   type WatchShredEventReturnType,
 } from '../../actions/shred/watchShredEvent'
+import {
+  watchShreds,
+  type WatchShredsParameters,
+  type WatchShredsReturnType,
+} from '../../actions/shred/watchShreds'
 import type { ShredRpcSchema } from '../../types/rpcSchema'
 import type { ShredsWebSocketTransport } from '../transports/shredsWebSocket'
 import type {
@@ -72,6 +77,13 @@ export type ShredActions<chain extends Chain | undefined = Chain | undefined> =
     >(
       parameters: WatchShredEventParameters<abiEvent, abiEvents, strict>,
     ) => WatchShredEventReturnType
+    /**
+     * Watches for new shreds on the RISE network.
+     *
+     * @param parameters - {@link WatchShredsParameters}
+     * @returns A function that can be used to unsubscribe from the shred.
+     */
+    watchShreds: (parameters: WatchShredsParameters) => WatchShredsReturnType
   }
 
 export function shredActions<
@@ -84,5 +96,6 @@ export function shredActions<
     sendRawTransactionSync: (args) => sendRawTransactionSync(client, args),
     watchContractShredEvent: (args) => watchContractShredEvent(client, args),
     watchShredEvent: (args) => watchShredEvent(client, args),
+    watchShreds: (args) => watchShreds(client, args),
   }
 }
