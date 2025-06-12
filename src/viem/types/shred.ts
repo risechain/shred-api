@@ -55,7 +55,7 @@ export type Shred = {
   blockNumber: bigint
   shredIndex: number
   transactions: (ShredTransactionEIP1559 | ShredTransactionLegacy)[]
-  stateSchanges: ShredStateChange[]
+  stateChanges: ShredStateChange[]
 }
 
 export type RpcShredTransactionEIP1559 = Omit<
