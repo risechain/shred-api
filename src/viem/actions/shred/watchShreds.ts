@@ -1,7 +1,7 @@
-import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
-import type { Chain, Client } from 'viem'
-import type { RpcShred, Shred } from '../../types/shred'
 import { formatShred } from '../../utils/formatters/shred'
+import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
+import type { RpcShred, Shred } from '../../types/shred'
+import type { Chain, Client } from 'viem'
 
 /**
  * Parameters for {@link watchShreds}.

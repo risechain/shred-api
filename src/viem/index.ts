@@ -12,6 +12,7 @@ export {
 export {
   watchShreds,
   type WatchShredsParameters,
+  type WatchShredsReturnType,
 } from './actions/shred/watchShreds'
 export {
   watchContractShredEvent,
@@ -32,3 +33,21 @@ export {
   type ShredsWebSocketTransport,
 } from './clients/transports/shredsWebSocket'
 export type { ShredLog } from './types/log'
+export type {
+  RpcShred,
+  RpcShredStateChanges,
+  RpcShredTransactionEIP1559,
+  RpcShredTransactionLegacy,
+  RpcShredTransactionReceiptEIP1559,
+  RpcShredTransactionReceiptLegacy,
+  Shred,
+  ShredStateChange,
+  ShredTransactionBase,
+  ShredTransactionEIP1559,
+  ShredTransactionLegacy,
+} from './types/shred'
+export {
+  formatShred,
+  formatShredStateChange,
+  receiptStatuses,
+} from './utils/formatters/shred'

@@ -1,4 +1,4 @@
-import type { AccessList, TransactionBase, Address, Hex } from 'viem'
+import type { AccessList, Address, Hex, TransactionBase } from 'viem'
 
 export type ShredTransactionBase<
   quantity = bigint,
