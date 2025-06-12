@@ -19,9 +19,9 @@ import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 export type PublicShredClient<
   transport extends
     | ShredsWebSocketTransport
-    | FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]> =
+    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]> =
     | ShredsWebSocketTransport
-    | FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]>,
+    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
   chain extends Chain | undefined = Chain | undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends RpcSchema | undefined = undefined,
@@ -40,7 +40,7 @@ export type PublicShredClient<
 export function createPublicShredClient<
   transport extends
     | ShredsWebSocketTransport
-    | FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]>,
+    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
   chain extends Chain | undefined = undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends [...RpcSchema, ...ShredRpcSchema] | undefined = undefined,

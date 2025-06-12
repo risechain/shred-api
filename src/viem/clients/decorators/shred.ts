@@ -73,7 +73,7 @@ export type ShredActions = {
 export function shredActions<
   transport extends
     | ShredsWebSocketTransport
-    | FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]>,
+    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
   chain extends Chain | undefined = undefined,
   account extends Account | undefined = undefined,
 >(client: Client<transport, chain, account>): ShredActions {
