@@ -9,7 +9,9 @@ import {
   type ContractEventArgs,
   type ContractEventName,
   type EncodeEventTopicsParameters,
+  type FallbackTransport,
   type LogTopic,
+  type Transport,
 } from 'viem'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
@@ -96,7 +98,9 @@ export function watchContractShredEvent<
   const abi_ extends Abi | readonly unknown[],
   eventName_ extends ContractEventName<abi_> | undefined = undefined,
   strict extends boolean | undefined = undefined,
-  transport extends ShredsWebSocketTransport = ShredsWebSocketTransport,
+  transport extends
+    | ShredsWebSocketTransport
+    | FallbackTransport<[ShredsWebSocketTransport]> = ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
   parameters: WatchContractShredEventParameters<abi_, eventName_, strict>,
@@ -111,6 +115,23 @@ export function watchContractShredEvent<
     strict: strict_,
   } = parameters
 
+  const transport_ = (() => {
+    if (client.transport.type === 'webSocket') return client.transport
+
+    const wsTransport = (
+      client.transport as ReturnType<
+        FallbackTransport<[ShredsWebSocketTransport]>
+      >['value']
+    )?.transports.find(
+      (transport: ReturnType<Transport>) =>
+        transport.config.type === 'webSocket',
+    )
+
+    if (!wsTransport) throw new Error('A shredWebSocket transport is required')
+
+    return wsTransport.value
+  })() as NonNullable<ReturnType<ShredsWebSocketTransport>['value']>
+
   const subscribeShredContractEvent = () => {
     let active = true
     let unsubscribe = () => {
@@ -119,8 +140,6 @@ export function watchContractShredEvent<
 
     ;(async () => {
       try {
-        const transport = client.transport
-
         const topics: LogTopic[] = eventName
           ? encodeEventTopics({
               abi,
@@ -129,7 +148,7 @@ export function watchContractShredEvent<
             } as EncodeEventTopicsParameters)
           : []
 
-        const { unsubscribe: unsubscribe_ } = await transport.riseSubscribe({
+        const { unsubscribe: unsubscribe_ } = await transport_.riseSubscribe({
           params: ['logs', { address, topics }],
           onData(data: any) {
             if (!active) return

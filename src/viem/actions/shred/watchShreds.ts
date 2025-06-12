@@ -1,7 +1,7 @@
 import { formatShred } from '../../utils/formatters/shred'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { RpcShred, Shred } from '../../types/shred'
-import type { Chain, Client } from 'viem'
+import type { Chain, Client, FallbackTransport, Transport } from 'viem'
 
 /**
  * Parameters for {@link watchShreds}.
@@ -24,19 +24,38 @@ export type WatchShredsReturnType = () => void
  */
 export function watchShreds<
   chain extends Chain | undefined,
-  transport extends ShredsWebSocketTransport,
+  transport extends
+    | ShredsWebSocketTransport
+    | FallbackTransport<[ShredsWebSocketTransport]> = ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
   { onShred, onError }: WatchShredsParameters,
 ): () => void {
+  const transport_ = (() => {
+    if (client.transport.type === 'webSocket') return client.transport
+
+    const wsTransport = (
+      client.transport as ReturnType<
+        FallbackTransport<[ShredsWebSocketTransport]>
+      >['value']
+    )?.transports.find(
+      (transport: ReturnType<Transport>) =>
+        transport.config.type === 'webSocket',
+    )
+
+    if (!wsTransport) throw new Error('A shredWebSocket transport is required')
+
+    return wsTransport.value
+  })() as NonNullable<ReturnType<ShredsWebSocketTransport>['value']>
+
   const subscribeShreds = () => {
     let active = true
     let unsubscribe = () => {
       active = false
     }
     ;(async () => {
-      const { unsubscribe: unsubscribe_ } =
-        await client.transport.riseSubscribe({
+      try {
+        const { unsubscribe: unsubscribe_ } = await transport_.riseSubscribe({
           params: [],
           onData: (data: any) => {
             if (!active) return
@@ -45,12 +64,15 @@ export function watchShreds<
 
             onShred(formatShred(shred))
           },
-          onError: (error) => {
+          onError: (error: Error) => {
             onError?.(error)
           },
         })
-      unsubscribe = unsubscribe_
-      if (!active) unsubscribe()
+        unsubscribe = unsubscribe_
+        if (!active) unsubscribe()
+      } catch (error) {
+        onError?.(error as Error)
+      }
     })()
     return () => unsubscribe()
   }

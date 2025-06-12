@@ -3,7 +3,12 @@ export {
   createPublicShredClient,
   type PublicShredClient,
 } from './clients/createPublicShredClient'
+export {
+  createPublicSyncClient,
+  type PublicSyncClient,
+} from './clients/createPublicSyncClient'
 export { shredActions, type ShredActions } from './clients/decorators/shred'
+export { syncActions, type SyncActions } from './clients/decorators/sync'
 export {
   sendRawTransactionSync,
   type SendRawTransactionSyncParameters,

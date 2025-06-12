@@ -9,9 +9,11 @@ import {
   type Chain,
   type Client,
   type EncodeEventTopicsParameters,
+  type FallbackTransport,
   type LogTopic,
   type MaybeAbiEventName,
   type MaybeExtractEventArgsFromAbi,
+  type Transport,
 } from 'viem'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
@@ -114,7 +116,9 @@ export function watchShredEvent<
     | readonly unknown[]
     | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   strict extends boolean | undefined = undefined,
-  transport extends ShredsWebSocketTransport = ShredsWebSocketTransport,
+  transport extends
+    | ShredsWebSocketTransport
+    | FallbackTransport<[ShredsWebSocketTransport]> = ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
   {
@@ -127,6 +131,23 @@ export function watchShredEvent<
     strict: strict_,
   }: WatchShredEventParameters<abiEvent, abiEvents, strict>,
 ): WatchShredEventReturnType {
+  const transport_ = (() => {
+    if (client.transport.type === 'webSocket') return client.transport
+
+    const wsTransport = (
+      client.transport as ReturnType<
+        FallbackTransport<[ShredsWebSocketTransport]>
+      >['value']
+    )?.transports.find(
+      (transport: ReturnType<Transport>) =>
+        transport.config.type === 'webSocket',
+    )
+
+    if (!wsTransport) throw new Error('A shredWebSocket transport is required')
+
+    return wsTransport.value
+  })() as NonNullable<ReturnType<ShredsWebSocketTransport>['value']>
+
   const isStrict = strict_ ?? false
 
   const subscribeShredEvents = () => {
@@ -152,48 +173,47 @@ export function watchShredEvent<
           if (event) topics = topics[0] as LogTopic[]
         }
 
-        const { unsubscribe: unsubscribe_ } =
-          await client.transport.riseSubscribe({
-            params: ['logs', { address, topics }],
-            onData(data: any) {
-              if (!active) return
-              const log = data.result
-              try {
-                const { eventName, args } = decodeEventLog({
-                  abi: events_ ?? [],
-                  data: log.data,
-                  topics: log.topics,
-                  strict: isStrict,
-                })
-                const formatted = formatLog(log, { args, eventName })
-                onLogs([formatted] as any)
-              } catch (error) {
-                let eventName: string | undefined
-                let isUnnamed: boolean | undefined
-                if (
-                  error instanceof DecodeLogDataMismatch ||
-                  error instanceof DecodeLogTopicsMismatch
-                ) {
-                  // If strict mode is on, and log data/topics do not match event definition, skip.
-                  if (isStrict) return
-                  eventName = error.abiItem.name
-                  isUnnamed = error.abiItem.inputs?.some(
-                    (x) => !('name' in x) || !x.name,
-                  )
-                }
-
-                // Set args to empty if there is an error decoding (e.g. indexed/non-indexed params mismatch).
-                const formatted = formatLog(log, {
-                  args: isUnnamed ? [] : {},
-                  eventName,
-                })
-                onLogs([formatted] as any)
+        const { unsubscribe: unsubscribe_ } = await transport_.riseSubscribe({
+          params: ['logs', { address, topics }],
+          onData(data: any) {
+            if (!active) return
+            const log = data.result
+            try {
+              const { eventName, args } = decodeEventLog({
+                abi: events_ ?? [],
+                data: log.data,
+                topics: log.topics,
+                strict: isStrict,
+              })
+              const formatted = formatLog(log, { args, eventName })
+              onLogs([formatted] as any)
+            } catch (error) {
+              let eventName: string | undefined
+              let isUnnamed: boolean | undefined
+              if (
+                error instanceof DecodeLogDataMismatch ||
+                error instanceof DecodeLogTopicsMismatch
+              ) {
+                // If strict mode is on, and log data/topics do not match event definition, skip.
+                if (isStrict) return
+                eventName = error.abiItem.name
+                isUnnamed = error.abiItem.inputs?.some(
+                  (x) => !('name' in x) || !x.name,
+                )
               }
-            },
-            onError: (error) => {
-              onError?.(error)
-            },
-          })
+
+              // Set args to empty if there is an error decoding (e.g. indexed/non-indexed params mismatch).
+              const formatted = formatLog(log, {
+                args: isUnnamed ? [] : {},
+                eventName,
+              })
+              onLogs([formatted] as any)
+            }
+          },
+          onError: (error: Error) => {
+            onError?.(error)
+          },
+        })
         unsubscribe = unsubscribe_
         if (!active) unsubscribe()
       } catch (error) {

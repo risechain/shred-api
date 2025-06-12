@@ -11,10 +11,10 @@ import {
   type RpcSchema,
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
-import { shredActions, type ShredActions } from './decorators/shred'
+import { syncActions, type SyncActions } from './decorators/sync'
 import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
-export type PublicShredClient<
+export type PublicSyncClient<
   transport extends ShredsWebSocketTransport = ShredsWebSocketTransport,
   chain extends Chain | undefined = Chain | undefined,
   accountOrAddress extends Account | undefined = undefined,
@@ -25,24 +25,24 @@ export type PublicShredClient<
     chain,
     accountOrAddress,
     rpcSchema extends RpcSchema
-      ? [...PublicRpcSchema, ...rpcSchema]
-      : PublicRpcSchema,
-    PublicActions<transport, chain> & ShredActions
+      ? [...PublicRpcSchema, ...rpcSchema, ...ShredRpcSchema]
+      : [...PublicRpcSchema, ...ShredRpcSchema],
+    PublicActions<transport, chain> & SyncActions<chain>
   >
 >
 
-export function createPublicShredClient<
+export function createPublicSyncClient<
   transport extends ShredsWebSocketTransport,
   chain extends Chain | undefined = undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends [...RpcSchema, ...ShredRpcSchema] | undefined = undefined,
 >(
   parameters: PublicClientConfig<transport, chain, accountOrAddress, rpcSchema>,
-): PublicShredClient<
+): PublicSyncClient<
   transport,
   chain,
   ParseAccount<accountOrAddress>,
   rpcSchema
 > {
-  return createPublicClient({ ...parameters }).extend(shredActions) as any
+  return createPublicClient({ ...parameters }).extend(syncActions) as any
 }
