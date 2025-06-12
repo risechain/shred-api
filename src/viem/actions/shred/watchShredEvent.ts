@@ -118,7 +118,9 @@ export function watchShredEvent<
   strict extends boolean | undefined = undefined,
   transport extends
     | ShredsWebSocketTransport
-    | FallbackTransport<[ShredsWebSocketTransport]> = ShredsWebSocketTransport,
+    | FallbackTransport<
+        readonly (ShredsWebSocketTransport | Transport)[]
+      > = ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
   {
@@ -136,7 +138,7 @@ export function watchShredEvent<
 
     const wsTransport = (
       client.transport as ReturnType<
-        FallbackTransport<[ShredsWebSocketTransport]>
+        FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]>
       >['value']
     )?.transports.find(
       (transport: ReturnType<Transport>) =>

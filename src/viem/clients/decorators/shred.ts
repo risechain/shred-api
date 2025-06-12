@@ -22,6 +22,7 @@ import type {
   Client,
   ContractEventName,
   FallbackTransport,
+  Transport,
 } from 'viem'
 
 /**
@@ -72,7 +73,7 @@ export type ShredActions = {
 export function shredActions<
   transport extends
     | ShredsWebSocketTransport
-    | FallbackTransport<[ShredsWebSocketTransport]>,
+    | FallbackTransport<readonly (ShredsWebSocketTransport | Transport)[]>,
   chain extends Chain | undefined = undefined,
   account extends Account | undefined = undefined,
 >(client: Client<transport, chain, account>): ShredActions {
