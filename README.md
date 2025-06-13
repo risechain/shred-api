@@ -41,16 +41,16 @@ With this method, you can send a transaction and receive extremely fast response
 
 ## Installation
 
-To install the `shred-api` package, use your preferred package manager:
+To install the `shreds` package, use your preferred package manager:
 
 ```bash
-bun add shred-api
+bun add shreds
 # or
-npm install shred-api
+npm install shreds
 # or
-yarn add shred-api
+yarn add shreds
 # or
-pnpm add shred-api
+pnpm add shreds
 ```
 
 ## Usage
@@ -58,7 +58,7 @@ pnpm add shred-api
 ### Creating a Public Shred Client
 
 ```typescript
-import { createPublicShredClient, shredsWebSocket } from 'shred-api/viem'
+import { createPublicShredClient, shredsWebSocket } from 'shreds/viem'
 import { riseTestnet } from 'viem/chains'
 
 const client = createPublicShredClient({
@@ -80,7 +80,7 @@ client.watchShreds({
 You can also decorate an existing Viem client with Shreds functionality:
 
 ```typescript
-import { shredActions, shredsWebSocket } from 'shred-api/viem'
+import { shredActions, shredsWebSocket } from 'shreds/viem'
 import { createPublicClient } from 'viem'
 import { riseTestnet } from 'viem/chains'
 
@@ -104,7 +104,7 @@ The `sendRawTransactionSync` method is the core feature that enables synchronous
 #### Basic Usage with createPublicSyncClient
 
 ```typescript
-import { createPublicSyncClient } from 'shred-api/viem'
+import { createPublicSyncClient } from 'shreds/viem'
 import { http } from 'viem'
 import { riseTestnet } from 'viem/chains'
 
@@ -134,7 +134,7 @@ try {
 #### Using with Wallet Client for Complete Transaction Flow
 
 ```typescript
-import { createPublicSyncClient } from 'shred-api/viem'
+import { createPublicSyncClient } from 'shreds/viem'
 import { createWalletClient, http } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { riseTestnet } from 'viem/chains'
@@ -187,7 +187,7 @@ sendTransaction()
 #### Decorating Existing Client with Sync Actions
 
 ```typescript
-import { syncActions } from 'shred-api/viem'
+import { syncActions } from 'shreds/viem'
 import { createPublicClient, http } from 'viem'
 import { riseTestnet } from 'viem/chains'
 
