@@ -97,6 +97,111 @@ publicClient.watchShreds({
 })
 ```
 
+### Using sendRawTransactionSync
+
+The `sendRawTransactionSync` method is the core feature that enables synchronous transaction processing on RISE Chain. Here are several ways to use it:
+
+#### Basic Usage with createPublicSyncClient
+
+```typescript
+import { createPublicSyncClient } from 'shred-api/viem'
+import { http } from 'viem'
+import { riseTestnet } from 'viem/chains'
+
+const syncClient = createPublicSyncClient({
+  chain: riseTestnet,
+  transport: http(),
+})
+
+// Send a pre-signed transaction and get the receipt immediately
+const serializedTransaction =
+  '0x02f86c0180843b9aca00825208940000000000000000000000000000000000000000880de0b6b3a764000080c0'
+
+try {
+  const receipt = await syncClient.sendRawTransactionSync({
+    serializedTransaction,
+  })
+
+  console.log('Transaction confirmed:', receipt.transactionHash)
+  console.log('Block number:', receipt.blockNumber)
+  console.log('Gas used:', receipt.gasUsed)
+  console.log('Status:', receipt.status) // 'success' or 'reverted'
+} catch (error) {
+  console.error('Transaction failed:', error)
+}
+```
+
+#### Using with Wallet Client for Complete Transaction Flow
+
+```typescript
+import { createPublicSyncClient } from 'shred-api/viem'
+import { createWalletClient, http } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { riseTestnet } from 'viem/chains'
+
+// Create a sync client for sending transactions
+const syncClient = createPublicSyncClient({
+  chain: riseTestnet,
+  transport: http(),
+})
+
+// Create a wallet client for signing transactions
+const account = privateKeyToAccount('0x...')
+const walletClient = createWalletClient({
+  account,
+  chain: riseTestnet,
+  transport: http(),
+})
+
+// Prepare and send a transaction
+async function sendTransaction() {
+  try {
+    // Prepare the transaction
+    const request = await walletClient.prepareTransactionRequest({
+      to: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8',
+      value: 1000000000000000000n, // 1 ETH in wei
+    })
+
+    // Sign the transaction
+    const serializedTransaction = await walletClient.signTransaction(request)
+
+    // Send and get receipt in one call
+    const receipt = await syncClient.sendRawTransactionSync({
+      serializedTransaction,
+    })
+
+    console.log('✅ Transaction successful!')
+    console.log('Hash:', receipt.transactionHash)
+    console.log('Block:', receipt.blockNumber)
+
+    return receipt
+  } catch (error) {
+    console.error('❌ Transaction failed:', error)
+    throw error
+  }
+}
+
+sendTransaction()
+```
+
+#### Decorating Existing Client with Sync Actions
+
+```typescript
+import { syncActions } from 'shred-api/viem'
+import { createPublicClient, http } from 'viem'
+import { riseTestnet } from 'viem/chains'
+
+const client = createPublicClient({
+  chain: riseTestnet,
+  transport: http(),
+}).extend(syncActions)
+
+// Now you can use sendRawTransactionSync on the extended client
+const receipt = await client.sendRawTransactionSync({
+  serializedTransaction: '0x...',
+})
+```
+
 ## Development
 
 To set up the development environment:
