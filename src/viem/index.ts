@@ -40,15 +40,24 @@ export {
 export type { ShredLog } from './types/log'
 export type {
   RpcShred,
+  RpcShredDepositTransaction,
   RpcShredStateChanges,
-  RpcShredTransactionEIP1559,
+  RpcShredTransactionEip1559,
+  RpcShredTransactionEip2930,
+  RpcShredTransactionEip7702,
   RpcShredTransactionLegacy,
-  RpcShredTransactionReceiptEIP1559,
+  RpcShredTransactionReceiptDeposit,
+  RpcShredTransactionReceiptEip1559,
+  RpcShredTransactionReceiptEip2930,
+  RpcShredTransactionReceiptEip7702,
   RpcShredTransactionReceiptLegacy,
   Shred,
+  ShredDepositTransaction,
   ShredStateChange,
   ShredTransactionBase,
-  ShredTransactionEIP1559,
+  ShredTransactionEip1559,
+  ShredTransactionEip2930,
+  ShredTransactionEip7702,
   ShredTransactionLegacy,
 } from './types/shred'
 export {
