@@ -1,12 +1,18 @@
 import { hexToNumber } from 'viem'
 import type {
   RpcShred,
+  RpcShredDepositTransaction,
   RpcShredStateChanges,
-  RpcShredTransactionEIP1559,
+  RpcShredTransactionEip1559,
+  RpcShredTransactionEip2930,
+  RpcShredTransactionEip7702,
   RpcShredTransactionLegacy,
   Shred,
+  ShredDepositTransaction,
   ShredStateChange,
-  ShredTransactionEIP1559,
+  ShredTransactionEip1559,
+  ShredTransactionEip2930,
+  ShredTransactionEip7702,
   ShredTransactionLegacy,
 } from '../../types/shred'
 
@@ -59,7 +65,7 @@ export function formatShred(shred: RpcShred): Shred {
           v: BigInt(tx.v),
         } satisfies ShredTransactionLegacy
       } else if ('Eip1559' in receipt) {
-        const tx = transaction as RpcShredTransactionEIP1559
+        const tx = transaction as RpcShredTransactionEip1559
         return {
           ...tx,
           chainId: hexToNumber(tx.chainId),
@@ -74,7 +80,56 @@ export function formatShred(shred: RpcShred): Shred {
           value: BigInt(tx.value),
           logs: receipt.Eip1559.logs,
           v: BigInt(tx.v),
-        } satisfies ShredTransactionEIP1559
+        } satisfies ShredTransactionEip1559
+      } else if ('Eip2930' in receipt) {
+        const tx = transaction as RpcShredTransactionEip2930
+        return {
+          ...tx,
+          chainId: hexToNumber(tx.chainId),
+          cumulativeGasUsed: BigInt(receipt.Eip2930.cumulativeGasUsed),
+          gas: BigInt(tx.gas),
+          status: receiptStatuses[receipt.Eip2930.status],
+          nonce: hexToNumber(tx.nonce),
+          type: 'eip2930',
+          typeHex: tx.type,
+          value: BigInt(tx.value),
+          logs: receipt.Eip2930.logs,
+          v: BigInt(tx.v),
+          gasPrice: BigInt(tx.gasPrice),
+        } satisfies ShredTransactionEip2930
+      } else if ('Eip7702' in receipt) {
+        const tx = transaction as RpcShredTransactionEip7702
+        return {
+          ...tx,
+          chainId: hexToNumber(tx.chainId),
+          cumulativeGasUsed: BigInt(receipt.Eip7702.cumulativeGasUsed),
+          gas: BigInt(tx.gas),
+          maxFeePerGas: BigInt(tx.maxFeePerGas),
+          maxPriorityFeePerGas: BigInt(tx.maxPriorityFeePerGas),
+          status: receiptStatuses[receipt.Eip7702.status],
+          nonce: hexToNumber(tx.nonce),
+          type: 'eip7702',
+          typeHex: tx.type,
+          value: BigInt(tx.value),
+          logs: receipt.Eip7702.logs,
+          v: BigInt(tx.v),
+        } satisfies ShredTransactionEip7702
+      } else if ('Deposit' in receipt) {
+        const tx = transaction as RpcShredDepositTransaction
+        return {
+          ...tx,
+          chainId: hexToNumber(tx.chainId),
+          cumulativeGasUsed: BigInt(receipt.Deposit.cumulativeGasUsed),
+          gas: BigInt(tx.gas),
+          status: receiptStatuses[receipt.Deposit.status],
+          nonce: hexToNumber(tx.nonce),
+          type: 'deposit',
+          typeHex: tx.type,
+          value: BigInt(tx.value),
+          logs: receipt.Deposit.logs,
+          v: BigInt(tx.v),
+          mint: BigInt(tx.mint),
+        } satisfies ShredDepositTransaction
       } else {
         throw new Error('Unknown tx type')
       }
