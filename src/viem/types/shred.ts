@@ -21,7 +21,7 @@ export type ShredTransactionBase<
     address: Address
     topics: Hex[]
     data: Hex
-  }
+  }[]
 }
 
 export type ShredTransactionLegacy<
