@@ -41,13 +41,13 @@ describe('watchContractShredEvent', () => {
     mockOnError = vi.fn()
   })
 
-  it('should subscribe to contract events and call onLogs', () => {
+  it('should subscribe to contract events and call onLogs', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchContractShredEvent(mockClient, {
+    const unsubscribe = await watchContractShredEvent(mockClient, {
       abi: mockAbi,
       address: '0x123',
       eventName: 'Transfer',
@@ -162,7 +162,7 @@ describe('watchContractShredEvent', () => {
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchContractShredEvent(mockClient, {
+    const unsubscribe = await watchContractShredEvent(mockClient, {
       abi: mockAbi,
       address: '0x123',
       eventName: 'Transfer',
@@ -176,13 +176,13 @@ describe('watchContractShredEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalled()
   })
 
-  it('should handle multiple addresses', () => {
+  it('should handle multiple addresses', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    watchContractShredEvent(mockClient, {
+    await watchContractShredEvent(mockClient, {
       abi: mockAbi,
       address: ['0x123', '0x456'],
       eventName: 'Transfer',
@@ -199,7 +199,7 @@ describe('watchContractShredEvent', () => {
     })
   })
 
-  it('should throw error if no webSocket transport is available', () => {
+  it('should throw error if no webSocket transport is available', async () => {
     const mockClientWithoutWS = {
       transport: {
         type: 'fallback',
@@ -207,13 +207,13 @@ describe('watchContractShredEvent', () => {
       },
     } as any
 
-    expect(() => {
+    await expect(
       watchContractShredEvent(mockClientWithoutWS, {
         abi: mockAbi,
         address: '0x123',
         eventName: 'Transfer',
         onLogs: mockOnLogs,
       })
-    }).toThrow('A shredWebSocket transport is required')
+    ).rejects.toThrow('A shredWebSocket transport is required')
   })
 })

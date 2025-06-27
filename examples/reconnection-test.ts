@@ -12,7 +12,7 @@ import { createPublicShredClient, shredsWebSocket } from '../src/viem'
 import { riseTestnet } from 'viem/chains'
 
 // Configuration
-const WS_URL = process.env.WS_URL || 'ws://localhost:8545'
+const WS_URL = process.env.WS_URL || 'wss://testnet.riselabs.xyz/ws'
 const RECONNECT_ATTEMPTS = 5
 const BASE_DELAY = 2000 // 2 seconds
 

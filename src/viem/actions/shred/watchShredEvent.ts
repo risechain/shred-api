@@ -17,6 +17,8 @@ import {
 } from 'viem'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
+import { getSubscriptionManager } from '../../utils/subscription/manager'
+import type { ManagedSubscription } from '../../utils/subscription/types'
 
 /**
  * The parameter for the `onLogs` callback in {@link watchShredEvent}.
@@ -66,6 +68,10 @@ export type WatchShredEventParameters<
   onError?: ((error: Error) => void) | undefined
   /** The callback to call when new event logs are received. */
   onLogs: WatchShredEventOnLogsFn<abiEvent, abiEvents, strict, _eventName>
+  /** Whether to create a managed subscription that supports dynamic updates. */
+  managed?: boolean | undefined
+  /** Whether to buffer events during subscription updates (only with managed: true). */
+  buffered?: boolean | undefined
 } & (
   | {
       event: abiEvent
@@ -98,7 +104,10 @@ export type WatchShredEventParameters<
 /**
  * Return type for {@link watchShredEvent}.
  */
-export type WatchShredEventReturnType = () => void
+export type WatchShredEventReturnType = (() => void) & {
+  /** The managed subscription object, only present when managed: true */
+  subscription?: ManagedSubscription | undefined
+}
 
 /**
  * Watches and returns emitted events that have been processed and confirmed as shreds
@@ -108,7 +117,7 @@ export type WatchShredEventReturnType = () => void
  * @param parameters - {@link WatchShredEventParameters}
  * @returns A function that can be used to unsubscribe from the event. {@link WatchShredEventReturnType}
  */
-export function watchShredEvent<
+export async function watchShredEvent<
   chain extends Chain | undefined,
   const abiEvent extends AbiEvent | undefined = undefined,
   const abiEvents extends
@@ -131,8 +140,10 @@ export function watchShredEvent<
     onError,
     onLogs,
     strict: strict_,
+    managed,
+    buffered,
   }: WatchShredEventParameters<abiEvent, abiEvents, strict>,
-): WatchShredEventReturnType {
+): Promise<WatchShredEventReturnType> {
   const transport_ = (() => {
     if (client.transport.type === 'webSocket') return client.transport
 
@@ -226,5 +237,29 @@ export function watchShredEvent<
     return () => unsubscribe()
   }
 
-  return subscribeShredEvents()
+  // Handle managed subscriptions
+  if (managed) {
+    const manager = getSubscriptionManager()
+    const subscription = await manager.createManagedSubscription(client, {
+      address,
+      args,
+      event,
+      events,
+      onError,
+      onLogs,
+      strict: strict_,
+      buffered,
+    })
+    
+    // Return enhanced unsubscribe with subscription property
+    const enhancedUnsubscribe = Object.assign(
+      () => subscription.unsubscribe(),
+      { subscription }
+    ) as WatchShredEventReturnType
+    
+    return enhancedUnsubscribe
+  }
+  
+  // Regular subscription (backward compatible)
+  return subscribeShredEvents() as WatchShredEventReturnType
 }

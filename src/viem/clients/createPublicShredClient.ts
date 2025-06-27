@@ -15,6 +15,7 @@ import {
 import type { ShredRpcSchema } from '../types/rpcSchema'
 import { shredActions, type ShredActions } from './decorators/shred'
 import { connectionActions, type ConnectionActions } from './decorators/connection'
+import { queueActions, type QueueActions } from './decorators/queue'
 import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
 export type PublicShredClient<
@@ -34,7 +35,7 @@ export type PublicShredClient<
     rpcSchema extends RpcSchema
       ? [...PublicRpcSchema, ...rpcSchema]
       : PublicRpcSchema,
-    PublicActions<transport, chain> & ShredActions & ConnectionActions
+    PublicActions<transport, chain> & ShredActions & ConnectionActions & QueueActions
   >
 >
 
@@ -55,5 +56,6 @@ export function createPublicShredClient<
 > {
   return createPublicClient({ ...parameters })
     .extend(shredActions)
-    .extend(connectionActions) as any
+    .extend(connectionActions)
+    .extend(queueActions) as any
 }

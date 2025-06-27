@@ -24,15 +24,27 @@ export function connectionActions<
   const getManager = async () => {
     const transport = client.transport as any
     
-    // Direct WebSocket transport
+    // Direct WebSocket transport - methods are available directly on transport after viem processing
+    if (transport?.getRpcClient) {
+      const rpcClient = await transport.getRpcClient()
+      return rpcClient?.connectionManager
+    }
+    
+    // Legacy fallback for transport.value.getRpcClient (in case some transports still use this structure)
     if (transport?.value?.getRpcClient) {
       const rpcClient = await transport.value.getRpcClient()
       return rpcClient?.connectionManager
     }
     
-    // Fallback transport
+    // Fallback transport with direct methods on first transport
+    if (transport?.value?.transports?.[0]?.getRpcClient) {
+      const rpcClient = await transport.value.transports[0].getRpcClient()
+      return rpcClient?.connectionManager
+    }
+    
+    // Fallback transport with legacy value structure
     if (transport?.value?.transports?.[0]?.value?.getRpcClient) {
-      const rpcClient = await transport.value.transports[0].value.getRpcClient()
+      const rpcClient = await transport.value.transports[0].value.getRpcClient() 
       return rpcClient?.connectionManager
     }
     

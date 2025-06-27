@@ -38,9 +38,11 @@ With this method, you can send a transaction and receive extremely fast response
 - **Viem Integration:** Built on top of Viem for robust and type-safe interactions with the blockchain.
 - **WebSocket Transport:** Includes a custom WebSocket transport for real-time Shreds monitoring.
 - **Fast Response Times:** Achieve transaction confirmations as low as 5ms when close to the sequencer.
-- **Enhanced Reconnection:** Automatic reconnection with exponential backoff for resilient connections.
-- **Connection Status Tracking:** Monitor WebSocket connection health in real-time.
-- **Request Queuing:** (Coming Soon) Queue requests during disconnections for reliable delivery.
+- **Enhanced Reliability:**
+  - **Automatic Reconnection:** Exponential backoff reconnection for resilient connections
+  - **Connection Status Tracking:** Real-time WebSocket connection health monitoring
+  - **Request Queuing:** Priority-based request queuing with automatic retry during network interruptions
+  - **Dynamic Subscription Management:** Add/remove addresses and pause/resume subscriptions without interruption
 
 ## Installation
 
@@ -277,6 +279,81 @@ const clientCustom = createPublicShredClient({
     },
   }),
 })
+```
+
+### Dynamic Subscription Management
+
+Manage subscriptions dynamically by adding/removing addresses or pausing event processing:
+
+```typescript
+// Create a managed subscription
+const { subscription } = await client.watchContractShredEvent({
+  managed: true,              // Enable dynamic management
+  buffered: true,             // Buffer events during updates
+  abi: contractAbi,
+  eventName: 'Transfer',
+  address: [],                // Start with no addresses
+  onLogs: (logs) => {
+    console.log('Transfer events:', logs);
+  }
+});
+
+// Dynamically add addresses
+await subscription.addAddress('0x123...');
+await subscription.addAddress('0x456...');
+
+// Remove an address
+await subscription.removeAddress('0x123...');
+
+// Pause/resume event processing
+subscription.pause();
+// Events are buffered while paused
+subscription.resume();
+// Buffered events are delivered
+
+// Get statistics
+const stats = subscription.getStats();
+console.log(`Events received: ${stats.eventCount}`);
+
+// Unsubscribe when done
+await subscription.unsubscribe();
+```
+
+### Request Queuing
+
+Queue requests to handle network disruptions gracefully:
+
+```typescript
+// Queue a high-priority request
+await client.queueRequest({
+  method: 'eth_sendRawTransaction',
+  params: [signedTx],
+  priority: 'high',
+  onSuccess: (result) => {
+    console.log('Transaction sent:', result);
+  },
+  onError: (error) => {
+    console.error('Transaction failed:', error);
+  }
+});
+
+// Monitor queue statistics
+const stats = client.getQueueStats();
+console.log(`Queued: ${stats.queueSize}, Processing: ${stats.processing}`);
+console.log(`Success rate: ${(stats.processed / (stats.processed + stats.failed) * 100).toFixed(2)}%`);
+
+// Control queue processing
+client.pauseQueue();  // Pause processing
+client.resumeQueue(); // Resume processing
+
+// View queued requests
+const requests = client.getQueuedRequests();
+requests.forEach(req => {
+  console.log(`[${req.priority}] ${req.method} - retry ${req.retryCount}/${req.maxRetries}`);
+});
+
+// Clear all queued requests
+client.clearQueue();
 ```
 
 ## Development

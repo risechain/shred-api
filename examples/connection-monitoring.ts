@@ -13,7 +13,7 @@ import { riseTestnet } from 'viem/chains'
 import type { ConnectionStatus, ConnectionStats } from '../src/viem/types/connection'
 
 // Configuration
-const WS_URL = process.env.WS_URL || 'ws://localhost:8545'
+const WS_URL = process.env.WS_URL || 'wss://testnet.riselabs.xyz/ws'
 
 console.log('🚀 Connection Status Monitoring Example')
 console.log(`📡 Connecting to: ${WS_URL}`)

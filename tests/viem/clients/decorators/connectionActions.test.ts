@@ -256,16 +256,15 @@ describe('Connection Actions Decorator', () => {
 
   describe('caching behavior', () => {
     it('should cache connection manager after first access', async () => {
+      const getRpcClientSpy = vi.spyOn(mockClient.transport.value, 'getRpcClient')
       const actions = connectionActions(mockClient)
       
       // First call triggers async retrieval
       actions.getConnectionStatus()
       
-      // Second call should use cache
-      const getRpcClientSpy = vi.spyOn(mockClient.transport.value, 'getRpcClient')
-      
       await new Promise(resolve => setTimeout(resolve, 10))
       
+      // These calls should use cache
       actions.getConnectionStatus()
       actions.getConnectionStats()
       actions.isConnected()

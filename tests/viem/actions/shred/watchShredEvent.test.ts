@@ -39,13 +39,13 @@ describe('watchShredEvent', () => {
     mockOnError = vi.fn()
   })
 
-  it('should subscribe to shred events with single event', () => {
+  it('should subscribe to shred events with single event', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchShredEvent(mockClient, {
+    const unsubscribe = await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
     })
@@ -59,14 +59,14 @@ describe('watchShredEvent', () => {
     expect(typeof unsubscribe).toBe('function')
   })
 
-  it('should subscribe to shred events with multiple events', () => {
+  it('should subscribe to shred events with multiple events', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
     const events = [mockEvent]
-    const unsubscribe = watchShredEvent(mockClient, {
+    const unsubscribe = await watchShredEvent(mockClient, {
       events,
       onLogs: mockOnLogs,
     })
@@ -80,13 +80,13 @@ describe('watchShredEvent', () => {
     expect(typeof unsubscribe).toBe('function')
   })
 
-  it('should subscribe without specific events', () => {
+  it('should subscribe without specific events', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchShredEvent(mockClient, {
+    const unsubscribe = await watchShredEvent(mockClient, {
       onLogs: mockOnLogs,
     })
 
@@ -108,7 +108,7 @@ describe('watchShredEvent', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
     })
@@ -140,7 +140,7 @@ describe('watchShredEvent', () => {
     const error = new Error('Subscription failed')
     mockTransport.riseSubscribe.mockRejectedValue(error)
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
       onError: mockOnError,
@@ -161,7 +161,7 @@ describe('watchShredEvent', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
       strict: false,
@@ -195,7 +195,7 @@ describe('watchShredEvent', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
       strict: true,
@@ -227,7 +227,7 @@ describe('watchShredEvent', () => {
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchShredEvent(mockClient, {
+    const unsubscribe = await watchShredEvent(mockClient, {
       event: mockEvent,
       onLogs: mockOnLogs,
     })
@@ -239,13 +239,13 @@ describe('watchShredEvent', () => {
     expect(mockUnsubscribe).toHaveBeenCalled()
   })
 
-  it('should handle address parameter', () => {
+  it('should handle address parameter', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       address: '0x123',
       onLogs: mockOnLogs,
@@ -258,13 +258,13 @@ describe('watchShredEvent', () => {
     })
   })
 
-  it('should handle multiple addresses', () => {
+  it('should handle multiple addresses', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    watchShredEvent(mockClient, {
+    await watchShredEvent(mockClient, {
       event: mockEvent,
       address: ['0x123', '0x456'],
       onLogs: mockOnLogs,
@@ -280,7 +280,7 @@ describe('watchShredEvent', () => {
     })
   })
 
-  it('should throw error if no webSocket transport is available', () => {
+  it('should throw error if no webSocket transport is available', async () => {
     const mockClientWithoutWS = {
       transport: {
         type: 'fallback',
@@ -288,15 +288,15 @@ describe('watchShredEvent', () => {
       },
     } as any
 
-    expect(() => {
+    await expect(
       watchShredEvent(mockClientWithoutWS, {
         event: mockEvent,
         onLogs: mockOnLogs,
       })
-    }).toThrow('A shredWebSocket transport is required')
+    ).rejects.toThrow('A shredWebSocket transport is required')
   })
 
-  it('should handle fallback transport with webSocket', () => {
+  it('should handle fallback transport with webSocket', async () => {
     const mockUnsubscribe = vi.fn()
     const mockFallbackTransport = {
       type: 'fallback',
@@ -316,7 +316,7 @@ describe('watchShredEvent', () => {
       transport: mockFallbackTransport,
     } as any
 
-    const unsubscribe = watchShredEvent(mockClientWithFallback, {
+    const unsubscribe = await watchShredEvent(mockClientWithFallback, {
       event: mockEvent,
       onLogs: mockOnLogs,
     })

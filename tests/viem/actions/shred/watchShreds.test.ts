@@ -37,13 +37,13 @@ describe('watchShreds', () => {
     vi.clearAllMocks()
   })
 
-  it('should subscribe to shreds and call onShred', () => {
+  it('should subscribe to shreds and call onShred', async () => {
     const mockUnsubscribe = vi.fn()
     mockTransport.riseSubscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchShreds(mockClient, {
+    const unsubscribe = await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
@@ -65,7 +65,7 @@ describe('watchShreds', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShreds(mockClient, {
+    await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
@@ -115,7 +115,7 @@ describe('watchShreds', () => {
     const error = new Error('Subscription failed')
     mockTransport.riseSubscribe.mockRejectedValue(error)
 
-    watchShreds(mockClient, {
+    await watchShreds(mockClient, {
       onShred: mockOnShred,
       onError: mockOnError,
     })
@@ -135,7 +135,7 @@ describe('watchShreds', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShreds(mockClient, {
+    await watchShreds(mockClient, {
       onShred: mockOnShred,
       onError: mockOnError,
     })
@@ -154,7 +154,7 @@ describe('watchShreds', () => {
       unsubscribe: mockUnsubscribe,
     })
 
-    const unsubscribe = watchShreds(mockClient, {
+    const unsubscribe = await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
@@ -174,7 +174,7 @@ describe('watchShreds', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShreds(mockClient, {
+    await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
@@ -192,7 +192,7 @@ describe('watchShreds', () => {
     expect(mockOnShred).toHaveBeenCalled()
   })
 
-  it('should throw error if no webSocket transport is available', () => {
+  it('should throw error if no webSocket transport is available', async () => {
     const mockClientWithoutWS = {
       transport: {
         type: 'fallback',
@@ -200,14 +200,14 @@ describe('watchShreds', () => {
       },
     } as any
 
-    expect(() => {
+    await expect(
       watchShreds(mockClientWithoutWS, {
         onShred: mockOnShred,
       })
-    }).toThrow('A shredWebSocket transport is required')
+    ).rejects.toThrow('A shredWebSocket transport is required')
   })
 
-  it('should handle fallback transport with webSocket', () => {
+  it('should handle fallback transport with webSocket', async () => {
     const mockUnsubscribe = vi.fn()
     const mockFallbackTransport = {
       type: 'fallback',
@@ -227,7 +227,7 @@ describe('watchShreds', () => {
       transport: mockFallbackTransport,
     } as any
 
-    const unsubscribe = watchShreds(mockClientWithFallback, {
+    const unsubscribe = await watchShreds(mockClientWithFallback, {
       onShred: mockOnShred,
     })
 
@@ -243,7 +243,7 @@ describe('watchShreds', () => {
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
 
-    watchShreds(mockClient, {
+    await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
@@ -292,7 +292,7 @@ describe('watchShreds', () => {
       })
     })
 
-    const unsubscribe = watchShreds(mockClient, {
+    const unsubscribe = await watchShreds(mockClient, {
       onShred: mockOnShred,
     })
 
