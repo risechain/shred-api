@@ -11,8 +11,11 @@ import {
   type RpcSchema,
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
+import {
+  connectionActions,
+  type ConnectionActions,
+} from './decorators/connection'
 import { syncActions, type SyncActions } from './decorators/sync'
-import { connectionActions, type ConnectionActions } from './decorators/connection'
 import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
 export type PublicSyncClient<

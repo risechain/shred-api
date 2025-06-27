@@ -13,11 +13,11 @@ import {
   type LogTopic,
   type Transport,
 } from 'viem'
+import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
-import type { Abi, Address, ExtractAbiEvent } from 'abitype'
-import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ManagedSubscription } from '../../utils/subscription/types'
+import type { Abi, Address, ExtractAbiEvent } from 'abitype'
 
 /**
  * The parameter for the `onLogs` callback in {@link watchContractShredEvent}.
@@ -226,16 +226,16 @@ export async function watchContractShredEvent<
       strict: strict_,
       buffered,
     })
-    
+
     // Return enhanced unsubscribe with subscription property
     const enhancedUnsubscribe = Object.assign(
       () => subscription.unsubscribe(),
-      { subscription }
+      { subscription },
     ) as WatchContractShredEventReturnType
-    
+
     return enhancedUnsubscribe
   }
-  
+
   // Regular subscription (backward compatible)
   return subscribeShredContractEvent() as WatchContractShredEventReturnType
 }

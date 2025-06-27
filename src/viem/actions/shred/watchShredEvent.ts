@@ -15,9 +15,9 @@ import {
   type MaybeExtractEventArgsFromAbi,
   type Transport,
 } from 'viem'
+import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { ShredLog } from '../../types/log'
-import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ManagedSubscription } from '../../utils/subscription/types'
 
 /**
@@ -250,16 +250,16 @@ export async function watchShredEvent<
       strict: strict_,
       buffered,
     })
-    
+
     // Return enhanced unsubscribe with subscription property
     const enhancedUnsubscribe = Object.assign(
       () => subscription.unsubscribe(),
-      { subscription }
+      { subscription },
     ) as WatchShredEventReturnType
-    
+
     return enhancedUnsubscribe
   }
-  
+
   // Regular subscription (backward compatible)
   return subscribeShredEvents() as WatchShredEventReturnType
 }

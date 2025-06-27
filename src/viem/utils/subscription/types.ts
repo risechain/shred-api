@@ -3,28 +3,28 @@ import type { Address, LogTopic } from 'viem'
 export interface ManagedSubscription {
   id: string
   type: 'shreds' | 'logs'
-  
+
   // Dynamic management methods
-  addAddress(address: Address): Promise<void>
-  removeAddress(address: Address): Promise<void>
-  getAddresses(): Address[]
-  updateTopics(topics: LogTopic[]): Promise<void>
-  getTopics(): LogTopic[]
-  
+  addAddress: (address: Address) => Promise<void>
+  removeAddress: (address: Address) => Promise<void>
+  getAddresses: () => Address[]
+  updateTopics: (topics: LogTopic[]) => Promise<void>
+  getTopics: () => LogTopic[]
+
   // State control
-  pause(): void
-  resume(): void
-  isPaused(): boolean
-  
+  pause: () => void
+  resume: () => void
+  isPaused: () => boolean
+
   // Statistics
-  getStats(): {
+  getStats: () => {
     eventCount: number
     createdAt: number
     lastEventAt?: number
   }
-  
+
   // Cleanup
-  unsubscribe(): Promise<void>
+  unsubscribe: () => void
 }
 
 export interface SubscriptionStats {

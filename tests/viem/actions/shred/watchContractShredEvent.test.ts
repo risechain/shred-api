@@ -213,7 +213,7 @@ describe('watchContractShredEvent', () => {
         address: '0x123',
         eventName: 'Transfer',
         onLogs: mockOnLogs,
-      })
+      }),
     ).rejects.toThrow('A shredWebSocket transport is required')
   })
 })

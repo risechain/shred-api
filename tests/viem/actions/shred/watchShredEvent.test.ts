@@ -292,7 +292,7 @@ describe('watchShredEvent', () => {
       watchShredEvent(mockClientWithoutWS, {
         event: mockEvent,
         onLogs: mockOnLogs,
-      })
+      }),
     ).rejects.toThrow('A shredWebSocket transport is required')
   })
 

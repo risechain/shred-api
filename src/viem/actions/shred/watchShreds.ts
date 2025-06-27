@@ -1,9 +1,9 @@
 import { formatShred } from '../../utils/formatters/shred'
+import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { RpcShred, Shred } from '../../types/shred'
-import type { Chain, Client, FallbackTransport, Transport } from 'viem'
-import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ManagedSubscription } from '../../utils/subscription/types'
+import type { Chain, Client, FallbackTransport, Transport } from 'viem'
 
 /**
  * Parameters for {@link watchShreds}.
@@ -95,16 +95,16 @@ export async function watchShreds<
       onError,
       buffered,
     })
-    
+
     // Return enhanced unsubscribe with subscription property
     const enhancedUnsubscribe = Object.assign(
       () => subscription.unsubscribe(),
-      { subscription }
+      { subscription },
     ) as WatchShredsReturnType
-    
+
     return enhancedUnsubscribe
   }
-  
+
   // Regular subscription (backward compatible)
   return subscribeShreds() as WatchShredsReturnType
 }

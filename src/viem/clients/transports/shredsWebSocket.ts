@@ -64,7 +64,7 @@ export function shredsWebSocket(
     const wsRpcClientOpts = { keepAlive, reconnect }
     if (!url_) throw new UrlRequiredError()
 
-    const returnValue = {
+    return {
       config: ws_.config,
       request: ws_.request,
       value: ws_.value
@@ -72,7 +72,15 @@ export function shredsWebSocket(
             getSocket: ws_.value.getSocket,
             getRpcClient: () => getWebSocketRpcClient(url_, wsRpcClientOpts),
             subscribe: ws_.value.subscribe,
-            async riseSubscribe({ params, onData, onError }) {
+            async riseSubscribe({
+              params,
+              onData,
+              onError,
+            }: {
+              params: any
+              onData: any
+              onError: any
+            }) {
               const rpcClient = await getWebSocketRpcClient(
                 url_,
                 wsRpcClientOpts,
@@ -123,7 +131,6 @@ export function shredsWebSocket(
             },
           }
         : undefined,
-    }
-    return returnValue
+    } as any
   }
 }

@@ -34,12 +34,17 @@ export interface RequestQueueStats {
 }
 
 export interface RequestQueue {
-  add(request: Omit<QueuedRequest, 'id' | 'createdAt' | 'retryCount' | 'resolve' | 'reject'>): Promise<any>
-  pause(): void
-  resume(): void
-  clear(): void
-  getStats(): RequestQueueStats
-  isPaused(): boolean
-  setMaxSize(size: number): void
-  getQueuedRequests(): QueuedRequest[]
+  add: (
+    request: Omit<
+      QueuedRequest,
+      'id' | 'createdAt' | 'retryCount' | 'resolve' | 'reject'
+    >,
+  ) => Promise<any>
+  pause: () => void
+  resume: () => void
+  clear: () => void
+  getStats: () => RequestQueueStats
+  isPaused: () => boolean
+  setMaxSize: (size: number) => void
+  getQueuedRequests: () => QueuedRequest[]
 }

@@ -67,7 +67,9 @@ export type ShredActions = {
    * @param parameters - {@link WatchShredsParameters}
    * @returns A function that can be used to unsubscribe from the shred.
    */
-  watchShreds: (parameters: WatchShredsParameters) => Promise<WatchShredsReturnType>
+  watchShreds: (
+    parameters: WatchShredsParameters,
+  ) => Promise<WatchShredsReturnType>
 }
 
 export function shredActions<

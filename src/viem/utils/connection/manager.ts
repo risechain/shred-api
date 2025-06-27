@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events'
-import type { ConnectionStatus, ConnectionStats } from '../../types/connection'
+import { EventEmitter } from 'node:events'
+import type { ConnectionStats, ConnectionStatus } from '../../types/connection'
 
 export class ConnectionStateManager extends EventEmitter {
   private state: ConnectionStats = {

@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ConnectionStateManager } from '../../../../src/viem/utils/connection/manager'
 import type { ConnectionStatus } from '../../../../src/viem/types/connection'
 
 describe('Connection Status Tracking', () => {
   let manager: ConnectionStateManager
-  
+
   beforeEach(() => {
     manager = new ConnectionStateManager()
   })
@@ -29,12 +29,17 @@ describe('Connection Status Tracking', () => {
       manager.updateStatus('disconnected')
       manager.updateStatus('error', new Error('test error'))
 
-      expect(statusChanges).toEqual(['connecting', 'connected', 'disconnected', 'error'])
+      expect(statusChanges).toEqual([
+        'connecting',
+        'connected',
+        'disconnected',
+        'error',
+      ])
     })
 
     it('should track connection timestamps', () => {
       const now = Date.now()
-      
+
       manager.updateStatus('connected')
       const stats1 = manager.getStats()
       expect(stats1.connectedAt).toBeGreaterThanOrEqual(now)
@@ -49,10 +54,10 @@ describe('Connection Status Tracking', () => {
     it('should track reconnection attempts', () => {
       manager.incrementReconnectAttempts()
       expect(manager.getStats().reconnectAttempts).toBe(1)
-      
+
       manager.incrementReconnectAttempts()
       expect(manager.getStats().reconnectAttempts).toBe(2)
-      
+
       manager.updateStatus('connected')
       expect(manager.getStats().reconnectAttempts).toBe(0)
     })
@@ -61,7 +66,7 @@ describe('Connection Status Tracking', () => {
       manager.incrementReconnectAttempts()
       manager.incrementReconnectAttempts()
       expect(manager.getStats().reconnectAttempts).toBe(2)
-      
+
       manager.resetReconnectAttempts()
       expect(manager.getStats().reconnectAttempts).toBe(0)
     })
@@ -69,11 +74,11 @@ describe('Connection Status Tracking', () => {
     it('should store last error', () => {
       const error = new Error('Connection failed')
       manager.updateStatus('error', error)
-      
+
       const stats = manager.getStats()
       expect(stats.status).toBe('error')
       expect(stats.lastError).toBe(error)
-      
+
       // Error should be cleared on successful connection
       manager.updateStatus('connected')
       expect(manager.getStats().lastError).toBeUndefined()
@@ -96,18 +101,18 @@ describe('Connection Status Tracking', () => {
       manager.updateStatus('connecting')
       manager.updateStatus('connected')
       manager.updateStatus('disconnected')
-      
+
       expect(manager.getStats().totalConnections).toBe(1)
       expect(manager.getStats().totalDisconnections).toBe(1)
-      
+
       // Second connection cycle
       manager.updateStatus('connecting')
       manager.updateStatus('connected')
       manager.updateStatus('disconnected')
-      
+
       expect(manager.getStats().totalConnections).toBe(2)
       expect(manager.getStats().totalDisconnections).toBe(2)
-      
+
       // Error without prior connection shouldn't increment disconnections
       manager.updateStatus('error')
       expect(manager.getStats().totalDisconnections).toBe(2)

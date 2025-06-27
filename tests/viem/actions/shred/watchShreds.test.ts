@@ -203,7 +203,7 @@ describe('watchShreds', () => {
     await expect(
       watchShreds(mockClientWithoutWS, {
         onShred: mockOnShred,
-      })
+      }),
     ).rejects.toThrow('A shredWebSocket transport is required')
   })
 

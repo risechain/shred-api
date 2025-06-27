@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
-import { createPublicShredClient, shredsWebSocket } from '../../src/viem'
 import { riseTestnet } from 'viem/chains'
+import { describe, expect, it } from 'vitest'
+import { createPublicShredClient, shredsWebSocket } from '../../src/viem'
 
 describe('Backward Compatibility', () => {
   it('should create client without any configuration (like old code)', () => {

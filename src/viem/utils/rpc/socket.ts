@@ -1,4 +1,5 @@
 import { SocketClosedError, TimeoutError, withTimeout } from 'viem'
+import { ConnectionStateManager } from '../connection/manager'
 import {
   createBatchScheduler,
   type CreateBatchSchedulerErrorType,
@@ -6,7 +7,6 @@ import {
 import type { ErrorType } from '../../errors/utils'
 import type { RpcRequest, ShredsRpcResponse } from '../../types/rpc'
 import { idCache } from './id'
-import { ConnectionStateManager } from '../connection/manager'
 
 type Id = string | number
 type CallbackFn = {
@@ -140,7 +140,7 @@ export async function getSocketRpcClient<socket extends {}>(
         const result = await getSocket({
           onClose() {
             connectionManager.updateStatus('disconnected')
-            
+
             // Notify all requests and subscriptions of the closure error.
             for (const request of requests.values())
               request.onError?.(new SocketClosedError({ url }))
@@ -150,8 +150,8 @@ export async function getSocketRpcClient<socket extends {}>(
             // Attempt to reconnect.
             if (reconnect && reconnectCount < attempts) {
               const backoffDelay = Math.min(
-                delay * Math.pow(2, reconnectCount),
-                30000 // max 30 seconds
+                delay * 2 ** reconnectCount,
+                30000, // max 30 seconds
               )
               setTimeout(async () => {
                 reconnectCount++
@@ -180,8 +180,8 @@ export async function getSocketRpcClient<socket extends {}>(
             // Attempt to reconnect.
             if (reconnect && reconnectCount < attempts) {
               const backoffDelay = Math.min(
-                delay * Math.pow(2, reconnectCount),
-                30000 // max 30 seconds
+                delay * 2 ** reconnectCount,
+                30000, // max 30 seconds
               )
               setTimeout(async () => {
                 reconnectCount++

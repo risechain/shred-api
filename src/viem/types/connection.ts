@@ -1,4 +1,8 @@
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
+export type ConnectionStatus =
+  | 'connecting'
+  | 'connected'
+  | 'disconnected'
+  | 'error'
 
 export interface ConnectionStats {
   status: ConnectionStatus

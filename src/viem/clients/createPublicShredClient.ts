@@ -13,9 +13,12 @@ import {
   type Transport,
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
-import { shredActions, type ShredActions } from './decorators/shred'
-import { connectionActions, type ConnectionActions } from './decorators/connection'
+import {
+  connectionActions,
+  type ConnectionActions,
+} from './decorators/connection'
 import { queueActions, type QueueActions } from './decorators/queue'
+import { shredActions, type ShredActions } from './decorators/shred'
 import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
 export type PublicShredClient<
@@ -35,7 +38,10 @@ export type PublicShredClient<
     rpcSchema extends RpcSchema
       ? [...PublicRpcSchema, ...rpcSchema]
       : PublicRpcSchema,
-    PublicActions<transport, chain> & ShredActions & ConnectionActions & QueueActions
+    PublicActions<transport, chain> &
+      ShredActions &
+      ConnectionActions &
+      QueueActions
   >
 >
 
