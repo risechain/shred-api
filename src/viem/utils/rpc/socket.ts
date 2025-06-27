@@ -6,6 +6,7 @@ import {
 import type { ErrorType } from '../../errors/utils'
 import type { RpcRequest, ShredsRpcResponse } from '../../types/rpc'
 import { idCache } from './id'
+import { ConnectionStateManager } from '../connection/manager'
 
 type Id = string | number
 type CallbackFn = {
@@ -42,6 +43,7 @@ export type SocketRpcClient<socket extends {}> = {
   requests: CallbackMap
   subscriptions: CallbackMap
   url: string
+  connectionManager: ConnectionStateManager
 }
 
 export type GetSocketRpcClientParameters<socket extends {} = {}> = {
@@ -125,14 +127,20 @@ export async function getSocketRpcClient<socket extends {}>(
       // Set up a cache for subscriptions (rise_subscribe).
       const subscriptions = new Map<Id, CallbackFn>()
 
+      // Create connection state manager
+      const connectionManager = new ConnectionStateManager()
+
       let error: Error | Event | undefined
       let socket: Socket<{}>
       let keepAliveTimer: ReturnType<typeof setInterval> | undefined
 
       // Set up socket implementation.
       async function setup() {
+        connectionManager.updateStatus('connecting')
         const result = await getSocket({
           onClose() {
+            connectionManager.updateStatus('disconnected')
+            
             // Notify all requests and subscriptions of the closure error.
             for (const request of requests.values())
               request.onError?.(new SocketClosedError({ url }))
@@ -140,11 +148,17 @@ export async function getSocketRpcClient<socket extends {}>(
               subscription.onError?.(new SocketClosedError({ url }))
 
             // Attempt to reconnect.
-            if (reconnect && reconnectCount < attempts)
+            if (reconnect && reconnectCount < attempts) {
+              const backoffDelay = Math.min(
+                delay * Math.pow(2, reconnectCount),
+                30000 // max 30 seconds
+              )
               setTimeout(async () => {
                 reconnectCount++
+                connectionManager.incrementReconnectAttempts()
                 await setup().catch(console.error)
-              }, delay)
+              }, backoffDelay)
+            }
             // Otherwise, clear all requests and subscriptions.
             else {
               requests.clear()
@@ -153,6 +167,7 @@ export async function getSocketRpcClient<socket extends {}>(
           },
           onError(error_) {
             error = error_
+            connectionManager.updateStatus('error', error_ as Error)
 
             // Notify all requests and subscriptions of the error.
             for (const request of requests.values()) request.onError?.(error)
@@ -163,11 +178,17 @@ export async function getSocketRpcClient<socket extends {}>(
             socketClient?.close()
 
             // Attempt to reconnect.
-            if (reconnect && reconnectCount < attempts)
+            if (reconnect && reconnectCount < attempts) {
+              const backoffDelay = Math.min(
+                delay * Math.pow(2, reconnectCount),
+                30000 // max 30 seconds
+              )
               setTimeout(async () => {
                 reconnectCount++
+                connectionManager.incrementReconnectAttempts()
                 await setup().catch(console.error)
-              }, delay)
+              }, backoffDelay)
+            }
             // Otherwise, clear all requests and subscriptions.
             else {
               requests.clear()
@@ -177,6 +198,8 @@ export async function getSocketRpcClient<socket extends {}>(
           onOpen() {
             error = undefined
             reconnectCount = 0
+            connectionManager.resetReconnectAttempts()
+            connectionManager.updateStatus('connected')
           },
           onResponse(data) {
             const isSubscription = data.method === 'rise_subscription'
@@ -268,6 +291,7 @@ export async function getSocketRpcClient<socket extends {}>(
         requests,
         subscriptions,
         url,
+        connectionManager,
       }
       socketClientCache.set(`${key}:${url}`, socketClient)
 

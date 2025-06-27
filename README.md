@@ -38,6 +38,9 @@ With this method, you can send a transaction and receive extremely fast response
 - **Viem Integration:** Built on top of Viem for robust and type-safe interactions with the blockchain.
 - **WebSocket Transport:** Includes a custom WebSocket transport for real-time Shreds monitoring.
 - **Fast Response Times:** Achieve transaction confirmations as low as 5ms when close to the sequencer.
+- **Enhanced Reconnection:** Automatic reconnection with exponential backoff for resilient connections.
+- **Connection Status Tracking:** Monitor WebSocket connection health in real-time.
+- **Request Queuing:** (Coming Soon) Queue requests during disconnections for reliable delivery.
 
 ## Installation
 
@@ -199,6 +202,80 @@ const client = createPublicClient({
 // Now you can use sendRawTransactionSync on the extended client
 const receipt = await client.sendRawTransactionSync({
   serializedTransaction: '0x...',
+})
+```
+
+### Connection Management
+
+The Shred client now includes built-in connection monitoring and resilience features:
+
+#### Monitoring Connection Status
+
+```typescript
+import { createPublicShredClient, shredsWebSocket } from 'shreds/viem'
+
+const client = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint'),
+})
+
+// Check connection status
+console.log(client.isConnected()) // true/false
+console.log(client.getConnectionStatus()) // 'connecting' | 'connected' | 'disconnected' | 'error'
+
+// Get detailed connection statistics
+const stats = client.getConnectionStats()
+console.log(stats)
+// {
+//   status: 'connected',
+//   connectedAt: 1234567890,
+//   reconnectAttempts: 0,
+//   totalConnections: 1,
+//   totalDisconnections: 0
+// }
+
+// Subscribe to connection changes
+const unsubscribe = client.onConnectionChange((status) => {
+  console.log('Connection status changed:', status)
+})
+
+// Wait for connection with timeout
+await client.waitForConnection(30000) // 30 second timeout
+```
+
+#### Configuring Reconnection
+
+By default, the WebSocket transport will automatically reconnect with exponential backoff:
+
+```typescript
+const client = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    // Reconnection is enabled by default with these settings:
+    reconnect: {
+      attempts: 5,      // Try 5 times
+      delay: 2000,      // Start with 2s delay
+    },
+    // Delays will be: 2s → 4s → 8s → 16s → 30s (capped)
+  }),
+})
+
+// Disable reconnection
+const clientNoReconnect = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    reconnect: false,
+  }),
+})
+
+// Custom reconnection settings
+const clientCustom = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    reconnect: {
+      attempts: 10,     // More attempts
+      delay: 5000,      // Start with 5s delay
+    },
+    keepAlive: {
+      interval: 10000,  // Ping every 10s
+    },
+  }),
 })
 ```
 
