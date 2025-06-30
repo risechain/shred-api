@@ -97,6 +97,95 @@ publicClient.watchShreds({
 })
 ```
 
+### Watching for Shred Events
+
+#### watchShredEvent
+
+Watch for specific events that have been processed and confirmed as shreds on the RISE network.
+
+```typescript
+import { createPublicShredClient, shredsWebSocket } from 'shreds/viem'
+import { riseTestnet } from 'viem/chains'
+
+const client = createPublicShredClient({
+  chain: riseTestnet,
+  transport: shredsWebSocket(),
+})
+
+// Define the event ABI you want to watch
+const transferEvent = {
+  type: 'event',
+  name: 'Transfer',
+  inputs: [
+    { name: 'from', type: 'address', indexed: true },
+    { name: 'to', type: 'address', indexed: true },
+    { name: 'value', type: 'uint256', indexed: false },
+  ],
+} as const
+
+// Watch for Transfer events
+const unsubscribe = client.watchShredEvent({
+  event: transferEvent,
+  address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8', // Optional: filter by contract
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log('Transfer:', log.args.from, '→', log.args.to, log.args.value)
+    })
+  },
+})
+```
+
+#### watchContractShredEvent
+
+Watch for contract events using the full contract ABI with automatic event decoding.
+
+```typescript
+// ERC-20 contract ABI (partial)
+const erc20Abi = [
+  {
+    type: 'event',
+    name: 'Transfer',
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'value', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Approval',
+    inputs: [
+      { name: 'owner', type: 'address', indexed: true },
+      { name: 'spender', type: 'address', indexed: true },
+      { name: 'value', type: 'uint256', indexed: false },
+    ],
+  },
+] as const
+
+// Watch for all events from the contract
+const unsubscribe = client.watchContractShredEvent({
+  abi: erc20Abi,
+  address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8',
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log(`${log.eventName}:`, log.args)
+    })
+  },
+})
+
+// Watch for specific event only
+const unsubscribeTransfers = client.watchContractShredEvent({
+  abi: erc20Abi,
+  eventName: 'Transfer',
+  address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8',
+  onLogs: (logs) => {
+    logs.forEach((log) => {
+      console.log('Transfer:', log.args.from, '→', log.args.to, log.args.value)
+    })
+  },
+})
+```
+
 ### Using sendRawTransactionSync
 
 The `sendRawTransactionSync` method is the core feature that enables synchronous transaction processing on RISE Chain. Here are several ways to use it:

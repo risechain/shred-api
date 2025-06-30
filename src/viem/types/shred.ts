@@ -1,4 +1,10 @@
-import type { AccessList, Address, Hex, TransactionBase } from 'viem'
+import type {
+  AccessList,
+  Address,
+  AuthorizationList,
+  Hex,
+  TransactionBase,
+} from 'viem'
 
 export type ShredTransactionBase<
   quantity = bigint,
@@ -15,7 +21,7 @@ export type ShredTransactionBase<
     address: Address
     topics: Hex[]
     data: Hex
-  }
+  }[]
 }
 
 export type ShredTransactionLegacy<
@@ -23,12 +29,23 @@ export type ShredTransactionLegacy<
   index = number,
   status = 'success' | 'reverted',
   type = 'legacy',
-> = Omit<ShredTransactionBase<quantity, index, status>, 'yParity'> & {
+> = ShredTransactionBase<quantity, index, status> & {
   gasPrice: quantity
   type: type
 }
 
-export type ShredTransactionEIP1559<
+export type ShredTransactionEip2930<
+  quantity = bigint,
+  index = number,
+  status = 'success' | 'reverted',
+  type = 'eip2930',
+> = ShredTransactionBase<quantity, index, status> & {
+  type: type
+  gasPrice: quantity
+  accessList: AccessList
+}
+
+export type ShredTransactionEip1559<
   quantity = bigint,
   index = number,
   status = 'success' | 'reverted',
@@ -37,6 +54,32 @@ export type ShredTransactionEIP1559<
   maxFeePerGas: quantity
   maxPriorityFeePerGas: quantity
   accessList: AccessList
+  type: type
+}
+
+export type ShredTransactionEip7702<
+  quantity = bigint,
+  index = number,
+  status = 'success' | 'reverted',
+  type = 'eip7702',
+> = ShredTransactionBase<quantity, index, status> & {
+  maxFeePerGas: quantity
+  maxPriorityFeePerGas: quantity
+  accessList: AccessList
+  authorizationList: AuthorizationList
+  type: type
+}
+
+export type ShredDepositTransaction<
+  quantity = bigint,
+  index = number,
+  status = 'success' | 'reverted',
+  type = 'deposit',
+> = ShredTransactionBase<quantity, index, status> & {
+  sourceHash: Hex
+  from: Address
+  mint: quantity
+  isSystemTransaction: boolean
   type: type
 }
 
@@ -54,18 +97,24 @@ export type ShredStateChange<quantity = bigint, index = number> = {
 export type Shred = {
   blockNumber: bigint
   shredIndex: number
-  transactions: (ShredTransactionEIP1559 | ShredTransactionLegacy)[]
+  transactions: (
+    | ShredTransactionEip1559
+    | ShredTransactionLegacy
+    | ShredTransactionEip2930
+    | ShredTransactionEip7702
+    | ShredDepositTransaction
+  )[]
   stateChanges: ShredStateChange[]
 }
 
-export type RpcShredTransactionEIP1559 = Omit<
-  ShredTransactionEIP1559<Hex, Hex, '0x0' | '0x1', Hex>,
+export type RpcShredTransactionEip1559 = Omit<
+  ShredTransactionEip1559<Hex, Hex, '0x0' | '0x1', Hex>,
   'logs' | 'cumulativeGasUsed' | 'status'
 >
 
-export type RpcShredTransactionReceiptEIP1559 = {
+export type RpcShredTransactionReceiptEip1559 = {
   Eip1559: Pick<
-    ShredTransactionEIP1559<Hex, Hex, '0x0' | '0x1', Hex>,
+    ShredTransactionEip1559<Hex, Hex, '0x0' | '0x1', Hex>,
     'logs' | 'cumulativeGasUsed' | 'status'
   >
 }
@@ -78,6 +127,42 @@ export type RpcShredTransactionLegacy = Omit<
 export type RpcShredTransactionReceiptLegacy = {
   Legacy: Pick<
     ShredTransactionLegacy<Hex, Hex, '0x0' | '0x1', Hex>,
+    'logs' | 'cumulativeGasUsed' | 'status'
+  >
+}
+
+export type RpcShredTransactionEip2930 = Omit<
+  ShredTransactionEip2930<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+>
+
+export type RpcShredTransactionReceiptEip2930 = {
+  Eip2930: Pick<
+    ShredTransactionEip2930<Hex, Hex, '0x0' | '0x1', Hex>,
+    'logs' | 'cumulativeGasUsed' | 'status'
+  >
+}
+
+export type RpcShredTransactionEip7702 = Omit<
+  ShredTransactionEip7702<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+>
+
+export type RpcShredTransactionReceiptEip7702 = {
+  Eip7702: Pick<
+    ShredTransactionEip7702<Hex, Hex, '0x0' | '0x1', Hex>,
+    'logs' | 'cumulativeGasUsed' | 'status'
+  >
+}
+
+export type RpcShredDepositTransaction = Omit<
+  ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+>
+
+export type RpcShredTransactionReceiptDeposit = {
+  Deposit: Pick<
+    ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
     'logs' | 'cumulativeGasUsed' | 'status'
   >
 }
@@ -102,8 +187,20 @@ export type RpcShred = {
         receipt: RpcShredTransactionReceiptLegacy
       }
     | {
-        transaction: RpcShredTransactionEIP1559
-        receipt: RpcShredTransactionReceiptEIP1559
+        transaction: RpcShredTransactionEip2930
+        receipt: RpcShredTransactionReceiptEip2930
+      }
+    | {
+        transaction: RpcShredTransactionEip1559
+        receipt: RpcShredTransactionReceiptEip1559
+      }
+    | {
+        transaction: RpcShredTransactionEip7702
+        receipt: RpcShredTransactionReceiptEip7702
+      }
+    | {
+        transaction: RpcShredDepositTransaction
+        receipt: RpcShredTransactionReceiptDeposit
       }
   )[]
   state_changes: RpcShredStateChanges
