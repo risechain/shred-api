@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/risechain/shred-api.git"
   },
-  "author": "risechain team",
+  "author": "RISE Chain",
   "files": [
     "dist"
   ],
