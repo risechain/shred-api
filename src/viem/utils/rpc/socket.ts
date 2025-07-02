@@ -196,16 +196,17 @@ export async function getSocketRpcClient<socket extends {}>(
           keepAliveTimer = setInterval(() => socket.ping?.(), keepAliveInterval)
         }
 
-        if (reconnect && reconnectCount > 0) {
-          subscriptions.clear()
-          for (const { onResponse, body, onError } of requests.values()) {
-            if (!body) {
-              continue
-            }
+        if (reconnect && subscriptions.size > 0) {
+          const subscriptionEntries = subscriptions.entries()
+          for (const [
+            key,
+            { onResponse, body, onError },
+          ] of subscriptionEntries) {
+            if (!body) continue
 
+            subscriptions.delete(key)
             socketClient?.request({ body, onResponse, onError })
           }
-          requests.clear()
         }
 
         return result
@@ -240,6 +241,7 @@ export async function getSocketRpcClient<socket extends {}>(
               subscriptions.set(response.result, {
                 onResponse: callback,
                 onError,
+                body,
               })
 
             // If we are unsubscribing from a topic, we want to remove the listener.
@@ -249,7 +251,7 @@ export async function getSocketRpcClient<socket extends {}>(
             onResponse(response)
           }
 
-          requests.set(id, { onResponse: callback, onError, body })
+          requests.set(id, { onResponse: callback, onError })
           try {
             socket.request({
               body: {
