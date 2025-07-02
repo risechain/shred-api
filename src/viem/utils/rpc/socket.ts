@@ -197,13 +197,15 @@ export async function getSocketRpcClient<socket extends {}>(
         }
 
         if (reconnect && reconnectCount > 0) {
-          for (const { onResponse, body, onError } of subscriptions.values()) {
+          subscriptions.clear()
+          for (const { onResponse, body, onError } of requests.values()) {
             if (!body) {
               continue
             }
 
             socketClient?.request({ body, onResponse, onError })
           }
+          requests.clear()
         }
 
         return result
