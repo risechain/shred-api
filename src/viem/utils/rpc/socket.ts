@@ -9,6 +9,7 @@ import { idCache } from './id'
 
 type Id = string | number
 type CallbackFn = {
+  body?: RpcRequest
   onResponse: (message: any) => void
   onError?: ((error?: Error | Event | undefined) => void) | undefined
 }
@@ -195,6 +196,16 @@ export async function getSocketRpcClient<socket extends {}>(
           keepAliveTimer = setInterval(() => socket.ping?.(), keepAliveInterval)
         }
 
+        if (reconnect && reconnectCount > 0) {
+          for (const { onResponse, body, onError } of subscriptions.values()) {
+            if (!body) {
+              continue
+            }
+
+            socketClient?.request({ body, onResponse, onError })
+          }
+        }
+
         return result
       }
       await setup()
@@ -236,7 +247,7 @@ export async function getSocketRpcClient<socket extends {}>(
             onResponse(response)
           }
 
-          requests.set(id, { onResponse: callback, onError })
+          requests.set(id, { onResponse: callback, onError, body })
           try {
             socket.request({
               body: {
