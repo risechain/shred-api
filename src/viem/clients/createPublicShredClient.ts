@@ -13,6 +13,11 @@ import {
   type Transport,
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
+import {
+  connectionActions,
+  type ConnectionActions,
+} from './decorators/connection'
+import { queueActions, type QueueActions } from './decorators/queue'
 import { shredActions, type ShredActions } from './decorators/shred'
 import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
@@ -33,7 +38,10 @@ export type PublicShredClient<
     rpcSchema extends RpcSchema
       ? [...PublicRpcSchema, ...rpcSchema]
       : PublicRpcSchema,
-    PublicActions<transport, chain> & ShredActions
+    PublicActions<transport, chain> &
+      ShredActions &
+      ConnectionActions &
+      QueueActions
   >
 >
 
@@ -52,5 +60,8 @@ export function createPublicShredClient<
   ParseAccount<accountOrAddress>,
   rpcSchema
 > {
-  return createPublicClient({ ...parameters }).extend(shredActions) as any
+  return createPublicClient({ ...parameters })
+    .extend(shredActions)
+    .extend(connectionActions)
+    .extend(queueActions) as any
 }

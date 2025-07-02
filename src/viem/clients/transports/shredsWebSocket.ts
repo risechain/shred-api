@@ -70,9 +70,17 @@ export function shredsWebSocket(
       value: ws_.value
         ? {
             getSocket: ws_.value.getSocket,
-            getRpcClient: ws_.value.getRpcClient,
+            getRpcClient: () => getWebSocketRpcClient(url_, wsRpcClientOpts),
             subscribe: ws_.value.subscribe,
-            async riseSubscribe({ params, onData, onError }) {
+            async riseSubscribe({
+              params,
+              onData,
+              onError,
+            }: {
+              params: any
+              onData: any
+              onError: any
+            }) {
               const rpcClient = await getWebSocketRpcClient(
                 url_,
                 wsRpcClientOpts,
@@ -123,6 +131,6 @@ export function shredsWebSocket(
             },
           }
         : undefined,
-    }
+    } as any
   }
 }

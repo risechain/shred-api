@@ -38,6 +38,11 @@ With this method, you can send a transaction and receive extremely fast response
 - **Viem Integration:** Built on top of Viem for robust and type-safe interactions with the blockchain.
 - **WebSocket Transport:** Includes a custom WebSocket transport for real-time Shreds monitoring.
 - **Fast Response Times:** Achieve transaction confirmations as low as 5ms when close to the sequencer.
+- **Enhanced Reliability:**
+  - **Automatic Reconnection:** Exponential backoff reconnection for resilient connections
+  - **Connection Status Tracking:** Real-time WebSocket connection health monitoring
+  - **Request Queuing:** Priority-based request queuing with automatic retry during network interruptions
+  - **Dynamic Subscription Management:** Add/remove addresses and pause/resume subscriptions without interruption
 
 ## Installation
 
@@ -289,6 +294,155 @@ const client = createPublicClient({
 const receipt = await client.sendRawTransactionSync({
   serializedTransaction: '0x...',
 })
+```
+
+### Connection Management
+
+The Shred client now includes built-in connection monitoring and resilience features:
+
+#### Monitoring Connection Status
+
+```typescript
+import { createPublicShredClient, shredsWebSocket } from 'shreds/viem'
+
+const client = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint'),
+})
+
+// Check connection status
+console.log(client.isConnected()) // true/false
+console.log(client.getConnectionStatus()) // 'connecting' | 'connected' | 'disconnected' | 'error'
+
+// Get detailed connection statistics
+const stats = client.getConnectionStats()
+console.log(stats)
+// {
+//   status: 'connected',
+//   connectedAt: 1234567890,
+//   reconnectAttempts: 0,
+//   totalConnections: 1,
+//   totalDisconnections: 0
+// }
+
+// Subscribe to connection changes
+const unsubscribe = client.onConnectionChange((status) => {
+  console.log('Connection status changed:', status)
+})
+
+// Wait for connection with timeout
+await client.waitForConnection(30000) // 30 second timeout
+```
+
+#### Configuring Reconnection
+
+By default, the WebSocket transport will automatically reconnect with exponential backoff:
+
+```typescript
+const client = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    // Reconnection is enabled by default with these settings:
+    reconnect: {
+      attempts: 5,      // Try 5 times
+      delay: 2000,      // Start with 2s delay
+    },
+    // Delays will be: 2s → 4s → 8s → 16s → 30s (capped)
+  }),
+})
+
+// Disable reconnection
+const clientNoReconnect = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    reconnect: false,
+  }),
+})
+
+// Custom reconnection settings
+const clientCustom = createPublicShredClient({
+  transport: shredsWebSocket('ws://your-endpoint', {
+    reconnect: {
+      attempts: 10,     // More attempts
+      delay: 5000,      // Start with 5s delay
+    },
+    keepAlive: {
+      interval: 10000,  // Ping every 10s
+    },
+  }),
+})
+```
+
+### Dynamic Subscription Management
+
+Manage subscriptions dynamically by adding/removing addresses or pausing event processing:
+
+```typescript
+// Create a managed subscription
+const { subscription } = await client.watchContractShredEvent({
+  managed: true,              // Enable dynamic management
+  buffered: true,             // Buffer events during updates
+  abi: contractAbi,
+  eventName: 'Transfer',
+  address: [],                // Start with no addresses
+  onLogs: (logs) => {
+    console.log('Transfer events:', logs);
+  }
+});
+
+// Dynamically add addresses
+await subscription.addAddress('0x123...');
+await subscription.addAddress('0x456...');
+
+// Remove an address
+await subscription.removeAddress('0x123...');
+
+// Pause/resume event processing
+subscription.pause();
+// Events are buffered while paused
+subscription.resume();
+// Buffered events are delivered
+
+// Get statistics
+const stats = subscription.getStats();
+console.log(`Events received: ${stats.eventCount}`);
+
+// Unsubscribe when done
+await subscription.unsubscribe();
+```
+
+### Request Queuing
+
+Queue requests to handle network disruptions gracefully:
+
+```typescript
+// Queue a high-priority request
+await client.queueRequest({
+  method: 'eth_sendRawTransaction',
+  params: [signedTx],
+  priority: 'high',
+  onSuccess: (result) => {
+    console.log('Transaction sent:', result);
+  },
+  onError: (error) => {
+    console.error('Transaction failed:', error);
+  }
+});
+
+// Monitor queue statistics
+const stats = client.getQueueStats();
+console.log(`Queued: ${stats.queueSize}, Processing: ${stats.processing}`);
+console.log(`Success rate: ${(stats.processed / (stats.processed + stats.failed) * 100).toFixed(2)}%`);
+
+// Control queue processing
+client.pauseQueue();  // Pause processing
+client.resumeQueue(); // Resume processing
+
+// View queued requests
+const requests = client.getQueuedRequests();
+requests.forEach(req => {
+  console.log(`[${req.priority}] ${req.method} - retry ${req.retryCount}/${req.maxRetries}`);
+});
+
+// Clear all queued requests
+client.clearQueue();
 ```
 
 ## Development

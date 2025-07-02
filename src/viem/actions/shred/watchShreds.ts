@@ -1,6 +1,8 @@
 import { formatShred } from '../../utils/formatters/shred'
+import { getSubscriptionManager } from '../../utils/subscription/manager'
 import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { RpcShred, Shred } from '../../types/shred'
+import type { ManagedSubscription } from '../../utils/subscription/types'
 import type { Chain, Client, FallbackTransport, Transport } from 'viem'
 
 /**
@@ -11,9 +13,16 @@ export interface WatchShredsParameters {
   onShred: (shred: Shred) => void
   /** The callback to call when an error occurred when trying to get for a new shred. */
   onError?: ((error: Error) => void) | undefined
+  /** Whether to create a managed subscription that supports dynamic updates. */
+  managed?: boolean | undefined
+  /** Whether to buffer events during subscription updates (only with managed: true). */
+  buffered?: boolean | undefined
 }
 
-export type WatchShredsReturnType = () => void
+export type WatchShredsReturnType = (() => void) & {
+  /** The managed subscription object, only present when managed: true */
+  subscription?: ManagedSubscription | undefined
+}
 
 /**
  * Watches for new shreds on the RISE network.
@@ -22,7 +31,7 @@ export type WatchShredsReturnType = () => void
  * @param parameters - {@link WatchShredsParameters}
  * @returns A function that can be used to unsubscribe from the shred.
  */
-export function watchShreds<
+export async function watchShreds<
   chain extends Chain | undefined,
   transport extends
     | ShredsWebSocketTransport
@@ -31,8 +40,8 @@ export function watchShreds<
       > = ShredsWebSocketTransport,
 >(
   client: Client<transport, chain>,
-  { onShred, onError }: WatchShredsParameters,
-): () => void {
+  { onShred, onError, managed, buffered }: WatchShredsParameters,
+): Promise<WatchShredsReturnType> {
   const transport_ = (() => {
     if (client.transport.type === 'webSocket') return client.transport
 
@@ -78,5 +87,24 @@ export function watchShreds<
     })()
     return () => unsubscribe()
   }
-  return subscribeShreds()
+  // Handle managed subscriptions
+  if (managed) {
+    const manager = getSubscriptionManager()
+    const subscription = await manager.createManagedSubscription(client, {
+      onShred,
+      onError,
+      buffered,
+    })
+
+    // Return enhanced unsubscribe with subscription property
+    const enhancedUnsubscribe = Object.assign(
+      () => subscription.unsubscribe(),
+      { subscription },
+    ) as WatchShredsReturnType
+
+    return enhancedUnsubscribe
+  }
+
+  // Regular subscription (backward compatible)
+  return subscribeShreds() as WatchShredsReturnType
 }
