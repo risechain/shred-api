@@ -3,7 +3,6 @@ import {
   type Account,
   type Chain,
   type Client,
-  type FallbackTransport,
   type ParseAccount,
   type Prettify,
   type PublicActions,
@@ -14,14 +13,9 @@ import {
 } from 'viem'
 import type { ShredRpcSchema } from '../types/rpcSchema'
 import { shredActions, type ShredActions } from './decorators/shred'
-import type { ShredsWebSocketTransport } from './transports/shredsWebSocket'
 
 export type PublicShredClient<
-  transport extends
-    | ShredsWebSocketTransport
-    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]> =
-    | ShredsWebSocketTransport
-    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
+  transport extends Transport = Transport,
   chain extends Chain | undefined = Chain | undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends RpcSchema | undefined = undefined,
@@ -31,16 +25,14 @@ export type PublicShredClient<
     chain,
     accountOrAddress,
     rpcSchema extends RpcSchema
-      ? [...PublicRpcSchema, ...rpcSchema]
-      : PublicRpcSchema,
+      ? [...PublicRpcSchema, ...ShredRpcSchema, ...rpcSchema]
+      : [...PublicRpcSchema, ...ShredRpcSchema],
     PublicActions<transport, chain> & ShredActions
   >
 >
 
 export function createPublicShredClient<
-  transport extends
-    | ShredsWebSocketTransport
-    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
+  transport extends Transport,
   chain extends Chain | undefined = undefined,
   accountOrAddress extends Account | undefined = undefined,
   rpcSchema extends [...RpcSchema, ...ShredRpcSchema] | undefined = undefined,

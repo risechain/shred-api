@@ -44,7 +44,7 @@
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
-    "viem": "^2.30.0"
+    "viem": "^2.31.6"
   },
   "dependencies": {
     "isows": "^1.0.7"

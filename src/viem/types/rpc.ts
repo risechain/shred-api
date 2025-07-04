@@ -11,7 +11,7 @@ type ErrorResult<error> = {
   params?: undefined
 }
 type Subscription<result, error> = {
-  method: 'rise_subscription'
+  method: 'eth_subscription'
   error?: undefined
   result?: undefined
   params:

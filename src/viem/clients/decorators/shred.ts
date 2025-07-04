@@ -1,4 +1,9 @@
 import {
+  sendRawTransactionSync,
+  type SendRawTransactionSyncParameters,
+  type SendRawTransactionSyncReturnType,
+} from '../../actions/shred/sendRawTransactionSync'
+import {
   watchContractShredEvent,
   type WatchContractShredEventParameters,
   type WatchContractShredEventReturnType,
@@ -13,7 +18,6 @@ import {
   type WatchShredsParameters,
   type WatchShredsReturnType,
 } from '../../actions/shred/watchShreds'
-import type { ShredsWebSocketTransport } from '../transports/shredsWebSocket'
 import type {
   Abi,
   AbiEvent,
@@ -21,7 +25,6 @@ import type {
   Chain,
   Client,
   ContractEventName,
-  FallbackTransport,
   Transport,
 } from 'viem'
 
@@ -29,7 +32,7 @@ import type {
  * Actions for interacting with Shreds on the RISE network, enabling real-time
  * transaction confirmation by processing blocks in smaller, instantly confirmed units.
  */
-export type ShredActions = {
+export type ShredActions<chain extends Chain | undefined = undefined> = {
   /**
    * Watches and returns emitted contract events that have been processed and confirmed as shreds
    * on the RISE network.
@@ -68,12 +71,20 @@ export type ShredActions = {
    * @returns A function that can be used to unsubscribe from the shred.
    */
   watchShreds: (parameters: WatchShredsParameters) => WatchShredsReturnType
+  /**
+   * Sends a raw transaction to the RISE network, where it is processed as a shred,
+   * and waits for its real-time confirmation.
+   *
+   * @param parameters - {@link SendRawTransactionSyncParameters}
+   * @returns The transaction hash. {@link SendRawTransactionSyncReturnType}
+   */
+  sendRawTransactionSync: (
+    parameters: SendRawTransactionSyncParameters,
+  ) => Promise<SendRawTransactionSyncReturnType<chain>>
 }
 
 export function shredActions<
-  transport extends
-    | ShredsWebSocketTransport
-    | FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>,
+  transport extends Transport,
   chain extends Chain | undefined = undefined,
   account extends Account | undefined = undefined,
 >(client: Client<transport, chain, account>): ShredActions {
@@ -81,5 +92,6 @@ export function shredActions<
     watchContractShredEvent: (args) => watchContractShredEvent(client, args),
     watchShredEvent: (args) => watchShredEvent(client, args),
     watchShreds: (args) => watchShreds(client, args),
+    sendRawTransactionSync: (args) => sendRawTransactionSync(client, args),
   }
 }

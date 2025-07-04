@@ -9,7 +9,6 @@ import {
   type Chain,
   type Client,
   type EncodeEventTopicsParameters,
-  type FallbackTransport,
   type LogTopic,
   type MaybeAbiEventName,
   type MaybeExtractEventArgsFromAbi,
@@ -116,11 +115,7 @@ export function watchShredEvent<
     | readonly unknown[]
     | undefined = abiEvent extends AbiEvent ? [abiEvent] : undefined,
   strict extends boolean | undefined = undefined,
-  transport extends
-    | ShredsWebSocketTransport
-    | FallbackTransport<
-        readonly [ShredsWebSocketTransport, ...Transport[]]
-      > = ShredsWebSocketTransport,
+  transport extends Transport = Transport,
 >(
   client: Client<transport, chain>,
   {
@@ -136,11 +131,7 @@ export function watchShredEvent<
   const transport_ = (() => {
     if (client.transport.type === 'webSocket') return client.transport
 
-    const wsTransport = (
-      client.transport as ReturnType<
-        FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>
-      >['value']
-    )?.transports.find(
+    const wsTransport = client.transport?.transports.find(
       (transport: ReturnType<Transport>) =>
         transport.config.type === 'webSocket',
     )
@@ -175,8 +166,8 @@ export function watchShredEvent<
           if (event) topics = topics[0] as LogTopic[]
         }
 
-        const { unsubscribe: unsubscribe_ } = await transport_.riseSubscribe({
-          params: ['logs', { address, topics }],
+        const { unsubscribe: unsubscribe_ } = await transport_.subscribe({
+          params: ['logs', { address, topics }], // TODO: update this
           onData(data: any) {
             if (!active) return
             const log = data.result

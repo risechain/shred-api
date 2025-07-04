@@ -19,19 +19,11 @@ RISE Chain introduces new RPC methods that extend standard Ethereum functionalit
 
 With this method, you can send a transaction and receive extremely fast responses, as low as 5ms if the client is close to the sequencer.
 
-### rise_subscribe
-
-- **rise_subscribe**: Enables real-time subscriptions to shreds and events on the RISE network
-  - Subscribe to new shreds as they are processed and confirmed
-  - Watch for specific contract events that have been processed as shreds
-  - Receive real-time updates without polling
-  - Provides abstractions through various `watchShred*` actions for different use cases
-
 ## Features
 
 - **Shreds Client:** Interact with Shreds on the RISE Network with synchronous transaction capabilities.
 - **Synchronous Transactions:** Leverages RISE Chain's custom `eth_sendRawTransactionSync` RPC method for fast, single-call transaction handling.
-- **Real-time Subscriptions:** Provides abstractions for the `rise_subscribe` RPC method through various `watchShred*` actions:
+- **Real-time Subscriptions:** Provides abstractions for subscribing to shreds through various `watchShred*` actions:
   - `watchShreds`: Subscribe to new shreds as they are processed and confirmed
   - `watchShredEvent`: Watch for specific events that have been processed as shreds
   - `watchContractShredEvent`: Monitor contract events processed as shreds with ABI decoding
