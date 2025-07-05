@@ -1,5 +1,4 @@
 import { formatShred } from '../../utils/formatters/shred'
-import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { RpcShred, Shred } from '../../types/shred'
 import type { Chain, Client, Transport } from 'viem'
 
@@ -40,7 +39,7 @@ export function watchShreds<
     if (!wsTransport) throw new Error('A shredWebSocket transport is required')
 
     return wsTransport.value
-  })() as NonNullable<ReturnType<ShredsWebSocketTransport>['value']>
+  })()
 
   const subscribeShreds = () => {
     let active = true
