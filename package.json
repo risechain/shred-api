@@ -1,54 +1,13 @@
 {
   "name": "shreds",
   "version": "0.1.7-beta.1",
-  "packageManager": "bun@1.2.16",
-  "description": "Shreds client for the Rise Network.",
-  "type": "module",
-  "license": "MIT",
-  "homepage": "https://github.com/risechain/shred-api#readme",
-  "bugs": {
-    "url": "https://github.com/risechain/shred-api/issues"
-  },
+  "author": "RISE Chain",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/risechain/shred-api.git"
   },
-  "author": "RISE Chain",
-  "files": [
-    "dist"
-  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": "./dist/index.js",
-    "./package.json": "./package.json",
-    "./viem": {
-      "types": "./dist/viem/index.d.ts",
-      "require": "./dist/viem/index.js",
-      "import": "./dist/viem/index.js"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "lint": "eslint --cache .",
-    "lint:fix": "bun run lint --fix",
-    "build": "tsdown",
-    "dev": "tsdown --watch",
-    "test": "vitest",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --cache --write .",
-    "release": "bumpp && bun publish",
-    "prepublishOnly": "bun run build"
-  },
-  "peerDependencies": {
-    "viem": "^2.31.6"
-  },
-  "dependencies": {
-    "isows": "^1.0.7"
-  },
   "devDependencies": {
     "@sxzz/eslint-config": "^7.0.3",
     "@sxzz/prettier-config": "^2.2.1",
@@ -63,8 +22,46 @@
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
+  "peerDependencies": {
+    "viem": "^2.31.6"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json",
+    "./viem": {
+      "types": "./dist/viem/index.d.ts",
+      "require": "./dist/viem/index.js",
+      "import": "./dist/viem/index.js"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/risechain/shred-api/issues"
+  },
+  "description": "Shreds client for the Rise Network.",
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/risechain/shred-api#readme",
+  "license": "MIT",
+  "packageManager": "bun@1.2.16",
   "prettier": "@sxzz/prettier-config",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "lint": "eslint --cache .",
+    "lint:fix": "bun run lint --fix",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --cache --write .",
+    "release": "bumpp && bun publish",
+    "prepublishOnly": "bun run build"
+  },
   "trustedDependencies": [
     "unrs-resolver"
-  ]
+  ],
+  "type": "module",
+  "types": "./dist/index.d.ts"
 }
