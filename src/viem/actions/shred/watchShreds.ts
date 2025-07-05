@@ -36,7 +36,7 @@ export function watchShreds<
         transport.config.type === 'webSocket',
     )
 
-    if (!wsTransport) throw new Error('A shredWebSocket transport is required')
+    if (!wsTransport) throw new Error('A websocket transport is required')
 
     return wsTransport.value
   })()
@@ -49,7 +49,7 @@ export function watchShreds<
     ;(async () => {
       try {
         const { unsubscribe: unsubscribe_ } = await transport_.subscribe({
-          params: [], // TODO: update this
+          params: ['shreds'], // TODO: update this
           onData: (data: any) => {
             if (!active) return
 
