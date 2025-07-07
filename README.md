@@ -8,7 +8,7 @@ This package provides a client library for RISE Chain, specifically designed for
 
 ## Custom RPC Methods
 
-RISE Chain introduces new RPC methods that extend standard Ethereum functionality:
+RISE Chain introduces a new RPC method that extend standard Ethereum functionality:
 
 ### eth_sendRawTransactionSync
 
@@ -19,14 +19,25 @@ RISE Chain introduces new RPC methods that extend standard Ethereum functionalit
 
 With this method, you can send a transaction and receive extremely fast responses, as low as 5ms if the client is close to the sequencer.
 
+## eth_subscribe
+
+RISE Chain extends the standard `eth_subscribe` method with enhanced functionality:
+
+- **New subscription type "shred"**: A new subscription type added to `eth_subscribe` for real-time shred monitoring
+  - Use `["shred"]` params to subscribe to new shreds as they are processed and confirmed
+  - Receive real-time updates without polling
+- **Enhanced "logs" subscription**: The standard `["logs"]` subscription is patched to broadcast events from shreds instead of blocks
+  - Use the familiar `["logs"]` params to watch for contract events
+  - Events now come from shreds for faster, more granular updates
+  - Maintains compatibility with standard Ethereum event filtering
+
 ## Features
 
 - **Shreds Client:** Interact with Shreds on the RISE Network with synchronous transaction capabilities.
 - **Synchronous Transactions:** Leverages RISE Chain's custom `eth_sendRawTransactionSync` RPC method for fast, single-call transaction handling.
-- **Real-time Subscriptions:** Provides abstractions for subscribing to shreds through various `watchShred*` actions:
+- **Real-time Subscriptions:**
   - `watchShreds`: Subscribe to new shreds as they are processed and confirmed
-  - `watchShredEvent`: Watch for specific events that have been processed as shreds
-  - `watchContractShredEvent`: Monitor contract events processed as shreds with ABI decoding
+  - Use standard Viem's `watchEvent` and `watchContractEvent` actions - they automatically listen to events from shreds instead of blocks on RISE Chain
 - **Viem Integration:** Built on top of Viem for robust and type-safe interactions with the blockchain.
 - **WebSocket Transport:** Includes a custom WebSocket transport for real-time Shreds monitoring.
 - **Fast Response Times:** Achieve transaction confirmations as low as 5ms when close to the sequencer.
@@ -89,19 +100,21 @@ publicClient.watchShreds({
 })
 ```
 
-### Watching for Shred Events
+### Watching for Events
 
-#### watchShredEvent
+On RISE Chain, you can use the standard Viem `watchEvent` and `watchContractEvent` actions to listen for events. These automatically receive events from shreds instead of blocks, providing faster and more granular updates.
 
-Watch for specific events that have been processed and confirmed as shreds on the RISE network.
+#### watchEvent
+
+Watch for specific events using the standard Viem action:
 
 ```typescript
-import { createPublicShredClient, shredsWebSocket } from 'shreds/viem'
+import { createPublicClient, webSocket } from 'viem'
 import { riseTestnet } from 'viem/chains'
 
-const client = createPublicShredClient({
+const client = createPublicClient({
   chain: riseTestnet,
-  transport: shredsWebSocket(),
+  transport: webSocket(),
 })
 
 // Define the event ABI you want to watch
@@ -115,8 +128,8 @@ const transferEvent = {
   ],
 } as const
 
-// Watch for Transfer events
-const unsubscribe = client.watchShredEvent({
+// Watch for Transfer events - automatically receives events from shreds
+const unsubscribe = client.watchEvent({
   event: transferEvent,
   address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8', // Optional: filter by contract
   onLogs: (logs) => {
@@ -127,9 +140,9 @@ const unsubscribe = client.watchShredEvent({
 })
 ```
 
-#### watchContractShredEvent
+#### watchContractEvent
 
-Watch for contract events using the full contract ABI with automatic event decoding.
+Watch for contract events using the full contract ABI with automatic event decoding:
 
 ```typescript
 // ERC-20 contract ABI (partial)
@@ -154,8 +167,8 @@ const erc20Abi = [
   },
 ] as const
 
-// Watch for all events from the contract
-const unsubscribe = client.watchContractShredEvent({
+// Watch for all events from the contract - events come from shreds
+const unsubscribe = client.watchContractEvent({
   abi: erc20Abi,
   address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8',
   onLogs: (logs) => {
@@ -166,7 +179,7 @@ const unsubscribe = client.watchContractShredEvent({
 })
 
 // Watch for specific event only
-const unsubscribeTransfers = client.watchContractShredEvent({
+const unsubscribeTransfers = client.watchContractEvent({
   abi: erc20Abi,
   eventName: 'Transfer',
   address: '0x742d35Cc6634C0532925a3b8D0C9e3e0C8b0e8c8',
@@ -177,6 +190,8 @@ const unsubscribeTransfers = client.watchContractShredEvent({
   },
 })
 ```
+
+> **Note:** On RISE Chain, these standard Viem actions automatically receive events from shreds instead of blocks, providing faster event processing without requiring any special configuration.
 
 ### Using sendRawTransactionSync
 
