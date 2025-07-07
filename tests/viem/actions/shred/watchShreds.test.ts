@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { watchShreds } from '../../../../src/viem/actions/shred/watchShreds'
-import type { ShredsWebSocketTransport } from '../../../../src/viem/clients/transports/shredsWebSocket'
-import type { Chain, Client } from 'viem'
+import type { Chain, Client, WebSocketTransport } from 'viem'
 
 // Mock the formatShred utility
 vi.mock('../../../../src/viem/utils/formatters/shred', () => ({
@@ -21,11 +20,11 @@ const createMockTransport = () => ({
 const createMockClient = (transport: any) =>
   ({
     transport,
-  }) as unknown as Client<ShredsWebSocketTransport, Chain>
+  }) as unknown as Client<WebSocketTransport, Chain>
 
 describe('watchShreds', () => {
   let mockTransport: ReturnType<typeof createMockTransport>
-  let mockClient: Client<ShredsWebSocketTransport, Chain>
+  let mockClient: Client<WebSocketTransport, Chain>
   let mockOnShred: ReturnType<typeof vi.fn>
   let mockOnError: ReturnType<typeof vi.fn>
 

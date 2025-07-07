@@ -1,7 +1,6 @@
 import { formatShred } from '../../utils/formatters/shred'
-import type { ShredsWebSocketTransport } from '../../clients/transports/shredsWebSocket'
 import type { RpcShred, Shred } from '../../types/shred'
-import type { Chain, Client, FallbackTransport, Transport } from 'viem'
+import type { Chain, Client, Transport } from 'viem'
 
 /**
  * Parameters for {@link watchShreds}.
@@ -24,11 +23,7 @@ export type WatchShredsReturnType = () => void
  */
 export function watchShreds<
   chain extends Chain | undefined,
-  transport extends
-    | ShredsWebSocketTransport
-    | FallbackTransport<
-        readonly [ShredsWebSocketTransport, ...Transport[]]
-      > = ShredsWebSocketTransport,
+  transport extends Transport = Transport,
 >(
   client: Client<transport, chain>,
   { onShred, onError }: WatchShredsParameters,
@@ -36,19 +31,15 @@ export function watchShreds<
   const transport_ = (() => {
     if (client.transport.type === 'webSocket') return client.transport
 
-    const wsTransport = (
-      client.transport as ReturnType<
-        FallbackTransport<readonly [ShredsWebSocketTransport, ...Transport[]]>
-      >['value']
-    )?.transports.find(
+    const wsTransport = client.transport?.transports.find(
       (transport: ReturnType<Transport>) =>
         transport.config.type === 'webSocket',
     )
 
-    if (!wsTransport) throw new Error('A shredWebSocket transport is required')
+    if (!wsTransport) throw new Error('A websocket transport is required')
 
     return wsTransport.value
-  })() as NonNullable<ReturnType<ShredsWebSocketTransport>['value']>
+  })()
 
   const subscribeShreds = () => {
     let active = true
@@ -57,8 +48,8 @@ export function watchShreds<
     }
     ;(async () => {
       try {
-        const { unsubscribe: unsubscribe_ } = await transport_.riseSubscribe({
-          params: [],
+        const { unsubscribe: unsubscribe_ } = await transport_.subscribe({
+          params: ['shreds'], // TODO: update this
           onData: (data: any) => {
             if (!active) return
 

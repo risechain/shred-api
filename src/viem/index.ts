@@ -3,12 +3,7 @@ export {
   createPublicShredClient,
   type PublicShredClient,
 } from './clients/createPublicShredClient'
-export {
-  createPublicSyncClient,
-  type PublicSyncClient,
-} from './clients/createPublicSyncClient'
 export { shredActions, type ShredActions } from './clients/decorators/shred'
-export { syncActions, type SyncActions } from './clients/decorators/sync'
 export {
   sendRawTransactionSync,
   type SendRawTransactionSyncParameters,
@@ -19,25 +14,6 @@ export {
   type WatchShredsParameters,
   type WatchShredsReturnType,
 } from './actions/shred/watchShreds'
-export {
-  watchContractShredEvent,
-  type WatchContractShredEventOnLogsFn,
-  type WatchContractShredEventOnLogsParameter,
-  type WatchContractShredEventParameters,
-  type WatchContractShredEventReturnType,
-} from './actions/shred/watchContractShredEvent'
-export {
-  watchShredEvent,
-  type WatchShredEventOnLogsFn,
-  type WatchShredEventOnLogsParameter,
-  type WatchShredEventParameters,
-  type WatchShredEventReturnType,
-} from './actions/shred/watchShredEvent'
-export {
-  shredsWebSocket,
-  type ShredsWebSocketTransport,
-} from './clients/transports/shredsWebSocket'
-export type { ShredLog } from './types/log'
 export type {
   RpcShred,
   RpcShredDepositTransaction,
