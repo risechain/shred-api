@@ -95,8 +95,10 @@ export type ShredStateChange<quantity = bigint, index = number> = {
 }
 
 export type Shred = {
+  blockTimestamp: bigint
   blockNumber: bigint
   shredIndex: number
+  startingLogIndex: number
   transactions: (
     | ShredTransactionEip1559
     | ShredTransactionLegacy
@@ -181,6 +183,8 @@ export type RpcShredStateChanges = {
 export type RpcShred = {
   block_number: number
   shred_idx: number
+  block_timestamp: number
+  starting_log_index: number
   transactions: (
     | {
         transaction: RpcShredTransactionLegacy

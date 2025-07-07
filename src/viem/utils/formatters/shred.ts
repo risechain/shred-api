@@ -46,6 +46,8 @@ export function formatShred(shred: RpcShred): Shred {
   return {
     blockNumber: BigInt(shred.block_number),
     shredIndex: shred.shred_idx,
+    blockTimestamp: BigInt(shred.block_timestamp),
+    startingLogIndex: shred.starting_log_index,
     stateChanges: formatShredStateChange(shred.state_changes),
     transactions: shred.transactions.map(({ receipt, transaction }) => {
       if ('Legacy' in receipt && receipt.Legacy) {
