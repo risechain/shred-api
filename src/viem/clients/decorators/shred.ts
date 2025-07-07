@@ -43,7 +43,7 @@ export type ShredActions = {
     strict extends boolean | undefined = undefined,
   >(
     parameters: WatchContractShredEventParameters<abi_, eventName_, strict>,
-  ) => WatchContractShredEventReturnType
+  ) => Promise<WatchContractShredEventReturnType>
   /**
    * Watches and returns emitted events that have been processed and confirmed as shreds
    * on the RISE network.
@@ -60,14 +60,16 @@ export type ShredActions = {
     strict extends boolean | undefined = undefined,
   >(
     parameters: WatchShredEventParameters<abiEvent, abiEvents, strict>,
-  ) => WatchShredEventReturnType
+  ) => Promise<WatchShredEventReturnType>
   /**
    * Watches for new shreds on the RISE network.
    *
    * @param parameters - {@link WatchShredsParameters}
    * @returns A function that can be used to unsubscribe from the shred.
    */
-  watchShreds: (parameters: WatchShredsParameters) => WatchShredsReturnType
+  watchShreds: (
+    parameters: WatchShredsParameters,
+  ) => Promise<WatchShredsReturnType>
 }
 
 export function shredActions<
