@@ -13,7 +13,7 @@ vi.mock('../../../../src/viem/utils/formatters/shred', () => ({
 // Mock transport
 const createMockTransport = () => ({
   type: 'webSocket' as const,
-  riseSubscribe: vi.fn(),
+  subscribe: vi.fn(),
 })
 
 // Mock client
@@ -38,7 +38,7 @@ describe('watchShreds', () => {
 
   it('should subscribe to shreds and call onShred', () => {
     const mockUnsubscribe = vi.fn()
-    mockTransport.riseSubscribe.mockResolvedValue({
+    mockTransport.subscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
@@ -46,8 +46,8 @@ describe('watchShreds', () => {
       onShred: mockOnShred,
     })
 
-    expect(mockTransport.riseSubscribe).toHaveBeenCalledWith({
-      params: [],
+    expect(mockTransport.subscribe).toHaveBeenCalledWith({
+      params: ['shreds'],
       onData: expect.any(Function),
       onError: expect.any(Function),
     })
@@ -59,7 +59,7 @@ describe('watchShreds', () => {
     const mockUnsubscribe = vi.fn()
     let onDataCallback: (data: any) => void
 
-    mockTransport.riseSubscribe.mockImplementation(({ onData }) => {
+    mockTransport.subscribe.mockImplementation(({ onData }) => {
       onDataCallback = onData
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
@@ -112,7 +112,7 @@ describe('watchShreds', () => {
 
   it('should handle errors during subscription', async () => {
     const error = new Error('Subscription failed')
-    mockTransport.riseSubscribe.mockRejectedValue(error)
+    mockTransport.subscribe.mockRejectedValue(error)
 
     watchShreds(mockClient, {
       onShred: mockOnShred,
@@ -129,7 +129,7 @@ describe('watchShreds', () => {
     const mockUnsubscribe = vi.fn()
     let onErrorCallback: (error: Error) => void
 
-    mockTransport.riseSubscribe.mockImplementation(({ onError }) => {
+    mockTransport.subscribe.mockImplementation(({ onError }) => {
       onErrorCallback = onError
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
@@ -149,7 +149,7 @@ describe('watchShreds', () => {
 
   it('should unsubscribe when returned function is called', async () => {
     const mockUnsubscribe = vi.fn()
-    mockTransport.riseSubscribe.mockResolvedValue({
+    mockTransport.subscribe.mockResolvedValue({
       unsubscribe: mockUnsubscribe,
     })
 
@@ -168,7 +168,7 @@ describe('watchShreds', () => {
     const mockUnsubscribe = vi.fn()
     let onDataCallback: (data: any) => void
 
-    mockTransport.riseSubscribe.mockImplementation(({ onData }) => {
+    mockTransport.subscribe.mockImplementation(({ onData }) => {
       onDataCallback = onData
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
@@ -203,7 +203,7 @@ describe('watchShreds', () => {
       watchShreds(mockClientWithoutWS, {
         onShred: mockOnShred,
       })
-    }).toThrow('A shredWebSocket transport is required')
+    }).toThrow('A websocket transport is required')
   })
 
   it('should handle fallback transport with webSocket', () => {
@@ -214,7 +214,7 @@ describe('watchShreds', () => {
         {
           config: { type: 'webSocket' },
           value: {
-            riseSubscribe: vi.fn().mockResolvedValue({
+            subscribe: vi.fn().mockResolvedValue({
               unsubscribe: mockUnsubscribe,
             }),
           },
@@ -237,7 +237,7 @@ describe('watchShreds', () => {
     const mockUnsubscribe = vi.fn()
     let onDataCallback: (data: any) => void
 
-    mockTransport.riseSubscribe.mockImplementation(({ onData }) => {
+    mockTransport.subscribe.mockImplementation(({ onData }) => {
       onDataCallback = onData
       return Promise.resolve({ unsubscribe: mockUnsubscribe })
     })
@@ -277,7 +277,7 @@ describe('watchShreds', () => {
     let onDataCallback: (data: any) => void
     let active = true
 
-    mockTransport.riseSubscribe.mockImplementation(({ onData }) => {
+    mockTransport.subscribe.mockImplementation(({ onData }) => {
       onDataCallback = (data: any) => {
         if (active) {
           onData(data)
