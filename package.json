@@ -1,6 +1,6 @@
 {
   "name": "shreds",
-  "version": "0.2.1",
+  "version": "0.2.2-beta.1",
   "packageManager": "bun@1.2.16",
   "description": "Shreds client for the Rise Network.",
   "type": "module",
