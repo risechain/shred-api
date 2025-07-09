@@ -49,13 +49,13 @@ export function watchShreds<
     ;(async () => {
       try {
         const { unsubscribe: unsubscribe_ } = await transport_.subscribe({
-          params: ['shreds'], // TODO: update this
-          onData: (data: any) => {
+          params: ['shreds'],
+          onData: async (data: any) => {
             if (!active) return
 
             const shred: RpcShred = data.result
 
-            onShred(formatShred(shred))
+            onShred(await formatShred(shred))
           },
           onError: (error: Error) => {
             onError?.(error)

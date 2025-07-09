@@ -3,6 +3,7 @@ import type {
   Address,
   AuthorizationList,
   Hex,
+  OneOf,
   TransactionBase,
 } from 'viem'
 
@@ -12,7 +13,7 @@ export type ShredTransactionBase<
   status = 'success' | 'reverted',
 > = Omit<
   TransactionBase<quantity, index>,
-  'blockHash' | 'blockNumber' | 'transactionIndex' | 'from' | 'yParity'
+  'blockHash' | 'blockNumber' | 'transactionIndex' | 'yParity'
 > & {
   chainId: index
   status: status
@@ -77,7 +78,6 @@ export type ShredDepositTransaction<
   type = 'deposit',
 > = ShredTransactionBase<quantity, index, status> & {
   sourceHash: Hex
-  from: Address
   mint: quantity
   isSystemTransaction: boolean
   type: type
@@ -99,19 +99,19 @@ export type Shred = {
   blockNumber: bigint
   shredIndex: number
   startingLogIndex: number
-  transactions: (
+  transactions: OneOf<
     | ShredTransactionEip1559
     | ShredTransactionLegacy
     | ShredTransactionEip2930
     | ShredTransactionEip7702
     | ShredDepositTransaction
-  )[]
+  >[]
   stateChanges: ShredStateChange[]
 }
 
 export type RpcShredTransactionEip1559 = Omit<
   ShredTransactionEip1559<Hex, Hex, '0x0' | '0x1', Hex>,
-  'logs' | 'cumulativeGasUsed' | 'status'
+  'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
 export type RpcShredTransactionReceiptEip1559 = {
@@ -123,7 +123,7 @@ export type RpcShredTransactionReceiptEip1559 = {
 
 export type RpcShredTransactionLegacy = Omit<
   ShredTransactionLegacy<Hex, Hex, '0x0' | '0x1', Hex>,
-  'logs' | 'cumulativeGasUsed' | 'status'
+  'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
 export type RpcShredTransactionReceiptLegacy = {
@@ -135,7 +135,7 @@ export type RpcShredTransactionReceiptLegacy = {
 
 export type RpcShredTransactionEip2930 = Omit<
   ShredTransactionEip2930<Hex, Hex, '0x0' | '0x1', Hex>,
-  'logs' | 'cumulativeGasUsed' | 'status'
+  'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
 export type RpcShredTransactionReceiptEip2930 = {
@@ -147,7 +147,7 @@ export type RpcShredTransactionReceiptEip2930 = {
 
 export type RpcShredTransactionEip7702 = Omit<
   ShredTransactionEip7702<Hex, Hex, '0x0' | '0x1', Hex>,
-  'logs' | 'cumulativeGasUsed' | 'status'
+  'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
 export type RpcShredTransactionReceiptEip7702 = {
