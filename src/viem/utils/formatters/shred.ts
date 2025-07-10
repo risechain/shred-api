@@ -4,6 +4,13 @@ import {
   keccak256,
   recoverAddress,
   serializeTransaction,
+  type Address,
+  type Signature,
+  type TransactionSerializable,
+  type TransactionSerializableEIP1559,
+  type TransactionSerializableEIP2930,
+  type TransactionSerializableEIP7702,
+  type TransactionSerializableLegacy,
 } from 'viem'
 import type {
   RpcShred,
@@ -48,7 +55,10 @@ export function formatShredStateChange(
   })
 }
 
-export async function formatShred(shred: RpcShred): Promise<Shred> {
+export async function formatShred(
+  shred: RpcShred,
+  chainId: number,
+): Promise<Shred> {
   return {
     blockNumber: BigInt(shred.block_number),
     shredIndex: shred.shred_idx,
@@ -57,21 +67,15 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
     stateChanges: formatShredStateChange(shred.state_changes),
     transactions: await Promise.all(
       shred.transactions.map(async ({ receipt, transaction }) => {
-        const serialized = serializeTransaction(transaction as never)
-        const hashed = keccak256(serialized)
-        const recoveredFrom = await recoverAddress({
-          hash: hashed,
-          signature: {
-            r: transaction.r,
-            s: transaction.s,
-            v: hexToBigInt(transaction.v),
-          },
-        })
-        if ('Legacy' in receipt && receipt.Legacy) {
+        const txChainId =
+          'chainId' in transaction && transaction.chainId
+            ? hexToNumber(transaction.chainId)
+            : chainId
+        if ('Legacy' in receipt) {
           const tx = transaction as RpcShredTransactionLegacy
-          return {
+          const formattedTx = {
             ...tx,
-            chainId: hexToNumber(tx.chainId),
+            chainId: txChainId,
             cumulativeGasUsed: BigInt(receipt.Legacy.cumulativeGasUsed),
             gas: BigInt(tx.gas),
             gasPrice: BigInt(tx.gasPrice),
@@ -81,14 +85,22 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
             typeHex: tx.type,
             value: BigInt(tx.value),
             logs: receipt.Legacy.logs,
-            v: BigInt(tx.v),
-            from: recoveredFrom,
+            v: hexToBigInt(tx.v),
+            from: '0x0' as Address, // Placeholder, will be set after recovery
           } satisfies ShredTransactionLegacy
+          const recoveredFrom =
+            await recoverFrom<TransactionSerializableLegacy>(formattedTx, {
+              r: formattedTx.r,
+              s: formattedTx.s,
+              v: formattedTx.v,
+            })
+          formattedTx.from = recoveredFrom
+          return formattedTx
         } else if ('Eip1559' in receipt) {
           const tx = transaction as RpcShredTransactionEip1559
-          return {
+          const formattedTx = {
             ...tx,
-            chainId: hexToNumber(tx.chainId),
+            chainId: txChainId,
             cumulativeGasUsed: BigInt(receipt.Eip1559.cumulativeGasUsed),
             gas: BigInt(tx.gas),
             maxFeePerGas: BigInt(tx.maxFeePerGas),
@@ -100,13 +112,21 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
             value: BigInt(tx.value),
             logs: receipt.Eip1559.logs,
             v: BigInt(tx.v),
-            from: recoveredFrom,
+            from: '0x0' as Address, // Placeholder, will be set after recovery
           } satisfies ShredTransactionEip1559
+          const recoveredFrom =
+            await recoverFrom<TransactionSerializableEIP1559>(formattedTx, {
+              r: formattedTx.r,
+              s: formattedTx.s,
+              v: formattedTx.v,
+            })
+          formattedTx.from = recoveredFrom
+          return formattedTx
         } else if ('Eip2930' in receipt) {
           const tx = transaction as RpcShredTransactionEip2930
-          return {
+          const formattedTx = {
             ...tx,
-            chainId: hexToNumber(tx.chainId),
+            chainId: txChainId,
             cumulativeGasUsed: BigInt(receipt.Eip2930.cumulativeGasUsed),
             gas: BigInt(tx.gas),
             status: receiptStatuses[receipt.Eip2930.status],
@@ -117,13 +137,21 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
             logs: receipt.Eip2930.logs,
             v: BigInt(tx.v),
             gasPrice: BigInt(tx.gasPrice),
-            from: recoveredFrom,
+            from: '0x0' as Address, // Placeholder, will be set after recovery
           } satisfies ShredTransactionEip2930
+          const recoveredFrom =
+            await recoverFrom<TransactionSerializableEIP2930>(formattedTx, {
+              r: formattedTx.r,
+              s: formattedTx.s,
+              v: formattedTx.v,
+            })
+          formattedTx.from = recoveredFrom
+          return formattedTx
         } else if ('Eip7702' in receipt) {
           const tx = transaction as RpcShredTransactionEip7702
-          return {
+          const formattedTx = {
             ...tx,
-            chainId: hexToNumber(tx.chainId),
+            chainId: txChainId,
             cumulativeGasUsed: BigInt(receipt.Eip7702.cumulativeGasUsed),
             gas: BigInt(tx.gas),
             maxFeePerGas: BigInt(tx.maxFeePerGas),
@@ -135,24 +163,32 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
             value: BigInt(tx.value),
             logs: receipt.Eip7702.logs,
             v: BigInt(tx.v),
-            from: recoveredFrom,
+            from: '0x0' as Address, // Placeholder, will be set after recovery
           } satisfies ShredTransactionEip7702
+          const recoveredFrom =
+            await recoverFrom<TransactionSerializableEIP7702>(formattedTx, {
+              r: formattedTx.r,
+              s: formattedTx.s,
+              v: formattedTx.v,
+            })
+          formattedTx.from = recoveredFrom
+          return formattedTx
         } else if ('Deposit' in receipt) {
           const tx = transaction as RpcShredDepositTransaction
           return {
             ...tx,
-            chainId: hexToNumber(tx.chainId),
+            chainId,
             cumulativeGasUsed: BigInt(receipt.Deposit.cumulativeGasUsed),
             gas: BigInt(tx.gas),
             status: receiptStatuses[receipt.Deposit.status],
-            nonce: hexToNumber(tx.nonce),
+            nonce: hexToNumber(receipt.Deposit.depositNonce),
             type: 'deposit',
             typeHex: tx.type,
             value: BigInt(tx.value),
             logs: receipt.Deposit.logs,
             v: BigInt(tx.v),
             mint: BigInt(tx.mint),
-            from: recoveredFrom,
+            from: tx.from,
           } satisfies ShredDepositTransaction
         } else {
           throw new Error('Unknown tx type')
@@ -160,4 +196,33 @@ export async function formatShred(shred: RpcShred): Promise<Shred> {
       }),
     ),
   }
+}
+
+function recoverFrom<Tx extends TransactionSerializable>(
+  tx: Tx,
+  signature: Signature,
+) {
+  const serialized = serializeTransaction<Tx>({
+    ...tx,
+    data: (tx as any).input,
+    r: undefined,
+    s: undefined,
+    v: undefined,
+    yParity: undefined,
+  })
+  const hashed = keccak256(serialized)
+  return recoverAddress({
+    hash: hashed,
+    signature: {
+      ...signature,
+      yParity: vToYParity(Number(signature.v!)),
+    },
+  })
+}
+
+export function vToYParity(v: number): number {
+  if (v === 0 || v === 27) return 0
+  if (v === 1 || v === 28) return 1
+  if (v >= 35) return v % 2 === 0 ? 1 : 0
+  throw new Error(`Invalid v value: ${v}. Expected 0, 1, 27, 28, or >= 35.`)
 }

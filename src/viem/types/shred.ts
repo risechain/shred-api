@@ -1,9 +1,9 @@
 import type {
   AccessList,
   Address,
-  AuthorizationList,
   Hex,
   OneOf,
+  SignedAuthorizationList,
   TransactionBase,
 } from 'viem'
 
@@ -15,7 +15,7 @@ export type ShredTransactionBase<
   TransactionBase<quantity, index>,
   'blockHash' | 'blockNumber' | 'transactionIndex' | 'yParity'
 > & {
-  chainId: index
+  chainId?: index
   status: status
   cumulativeGasUsed: quantity
   logs: {
@@ -67,7 +67,7 @@ export type ShredTransactionEip7702<
   maxFeePerGas: quantity
   maxPriorityFeePerGas: quantity
   accessList: AccessList
-  authorizationList: AuthorizationList
+  authorizationList: SignedAuthorizationList
   type: type
 }
 
@@ -94,18 +94,20 @@ export type ShredStateChange<quantity = bigint, index = number> = {
   newCode: Hex | null
 }
 
+export type ShredTransaction = OneOf<
+  | ShredTransactionEip1559
+  | ShredTransactionLegacy
+  | ShredTransactionEip2930
+  | ShredTransactionEip7702
+  | ShredDepositTransaction
+>
+
 export type Shred = {
   blockTimestamp: bigint
   blockNumber: bigint
   shredIndex: number
   startingLogIndex: number
-  transactions: OneOf<
-    | ShredTransactionEip1559
-    | ShredTransactionLegacy
-    | ShredTransactionEip2930
-    | ShredTransactionEip7702
-    | ShredDepositTransaction
-  >[]
+  transactions: ShredTransaction[]
   stateChanges: ShredStateChange[]
 }
 
@@ -159,14 +161,16 @@ export type RpcShredTransactionReceiptEip7702 = {
 
 export type RpcShredDepositTransaction = Omit<
   ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
-  'logs' | 'cumulativeGasUsed' | 'status'
+  'logs' | 'cumulativeGasUsed' | 'status' | 'chainId' | 'nonce'
 >
 
 export type RpcShredTransactionReceiptDeposit = {
   Deposit: Pick<
     ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
     'logs' | 'cumulativeGasUsed' | 'status'
-  >
+  > & {
+    depositNonce: Hex
+  }
 }
 
 export type RpcShredStateChanges = {
@@ -180,32 +184,34 @@ export type RpcShredStateChanges = {
   }
 }
 
+export type RpcShredTransaction = OneOf<
+  | {
+      transaction: RpcShredTransactionLegacy
+      receipt: RpcShredTransactionReceiptLegacy
+    }
+  | {
+      transaction: RpcShredTransactionEip2930
+      receipt: RpcShredTransactionReceiptEip2930
+    }
+  | {
+      transaction: RpcShredTransactionEip1559
+      receipt: RpcShredTransactionReceiptEip1559
+    }
+  | {
+      transaction: RpcShredTransactionEip7702
+      receipt: RpcShredTransactionReceiptEip7702
+    }
+  | {
+      transaction: RpcShredDepositTransaction
+      receipt: RpcShredTransactionReceiptDeposit
+    }
+>
+
 export type RpcShred = {
   block_number: number
   shred_idx: number
   block_timestamp: number
   starting_log_index: number
-  transactions: (
-    | {
-        transaction: RpcShredTransactionLegacy
-        receipt: RpcShredTransactionReceiptLegacy
-      }
-    | {
-        transaction: RpcShredTransactionEip2930
-        receipt: RpcShredTransactionReceiptEip2930
-      }
-    | {
-        transaction: RpcShredTransactionEip1559
-        receipt: RpcShredTransactionReceiptEip1559
-      }
-    | {
-        transaction: RpcShredTransactionEip7702
-        receipt: RpcShredTransactionReceiptEip7702
-      }
-    | {
-        transaction: RpcShredDepositTransaction
-        receipt: RpcShredTransactionReceiptDeposit
-      }
-  )[]
+  transactions: RpcShredTransaction[]
   state_changes: RpcShredStateChanges
 }

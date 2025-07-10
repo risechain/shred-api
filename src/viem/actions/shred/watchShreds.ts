@@ -55,7 +55,7 @@ export function watchShreds<
 
             const shred: RpcShred = data.result
 
-            onShred(await formatShred(shred))
+            onShred(await formatShred(shred, client.chain!.id))
           },
           onError: (error: Error) => {
             onError?.(error)
