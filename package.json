@@ -44,20 +44,20 @@
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
-    "viem": "^2.31.7"
+    "viem": "^2.33.3"
   },
   "devDependencies": {
-    "@sxzz/eslint-config": "^7.0.4",
+    "@sxzz/eslint-config": "^7.1.2",
     "@sxzz/prettier-config": "^2.2.3",
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.2.0",
     "abitype": "^1.0.8",
-    "bumpp": "^10.2.0",
-    "eslint": "^9.30.1",
+    "bumpp": "^10.2.2",
+    "eslint": "^9.32.0",
     "happy-dom": "^18.0.1",
     "prettier": "^3.6.2",
-    "tsdown": "^0.12.9",
+    "tsdown": "^0.13.3",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "prettier": "@sxzz/prettier-config",

@@ -16,6 +16,7 @@ export type ShredTransactionBase<
   'blockHash' | 'blockNumber' | 'transactionIndex' | 'yParity'
 > & {
   chainId?: index
+  signer: Address
   status: status
   cumulativeGasUsed: quantity
   logs: {
@@ -213,5 +214,5 @@ export type RpcShred = {
   block_timestamp: number
   starting_log_index: number
   transactions: RpcShredTransaction[]
-  state_changes: RpcShredStateChanges
+  state_changes?: RpcShredStateChanges
 }

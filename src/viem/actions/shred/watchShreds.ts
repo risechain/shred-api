@@ -6,6 +6,10 @@ import type { Chain, Client, Transport } from 'viem'
  * Parameters for {@link watchShreds}.
  */
 export interface WatchShredsParameters {
+  /** Whether to include state changes in the shred data
+   * @default false
+   */
+  includeStateChanges?: boolean
   /** The callback to call when a new shred is received. */
   onShred: (shred: Shred) => void
   /** The callback to call when an error occurred when trying to get for a new shred. */
@@ -26,7 +30,7 @@ export function watchShreds<
   transport extends Transport = Transport,
 >(
   client: Client<transport, chain>,
-  { onShred, onError }: WatchShredsParameters,
+  { onShred, onError, includeStateChanges }: WatchShredsParameters,
 ): () => void {
   const transport_ = (() => {
     if (client.transport.type === 'webSocket') return client.transport
@@ -49,13 +53,13 @@ export function watchShreds<
     ;(async () => {
       try {
         const { unsubscribe: unsubscribe_ } = await transport_.subscribe({
-          params: ['shreds'],
-          onData: async (data: any) => {
+          params: ['shreds', includeStateChanges ?? false],
+          onData: (data: any) => {
             if (!active) return
 
             const shred: RpcShred = data.result
 
-            onShred(await formatShred(shred, client.chain!.id))
+            onShred(formatShred(shred, client.chain!.id))
           },
           onError: (error: Error) => {
             onError?.(error)
