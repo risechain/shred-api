@@ -20,6 +20,7 @@ const createMockTransport = () => ({
 const createMockClient = (transport: any) =>
   ({
     transport,
+    chain: { id: 1 },
   }) as unknown as Client<WebSocketTransport, Chain>
 
 describe('watchShreds', () => {
@@ -47,7 +48,7 @@ describe('watchShreds', () => {
     })
 
     expect(mockTransport.subscribe).toHaveBeenCalledWith({
-      params: ['shreds'],
+      params: ['shreds', false],
       onData: expect.any(Function),
       onError: expect.any(Function),
     })

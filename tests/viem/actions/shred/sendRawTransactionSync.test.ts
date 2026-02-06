@@ -22,7 +22,7 @@ describe('sendRawTransactionSync', () => {
       status: 'success',
     }
 
-    vi.mocked(mockClient.request).mockResolvedValue(mockReceipt)
+    ;(mockClient.request as ReturnType<typeof vi.fn>).mockResolvedValue(mockReceipt)
 
     const serializedTransaction = '0xabcdef123456'
     const result = await sendRawTransactionSync(mockClient, {
@@ -46,7 +46,7 @@ describe('sendRawTransactionSync', () => {
       status: 'success',
     }
 
-    vi.mocked(mockClient.request).mockResolvedValue(mockReceipt)
+    ;(mockClient.request as ReturnType<typeof vi.fn>).mockResolvedValue(mockReceipt)
 
     const serializedTransaction =
       '0x02f86c0180843b9aca00825208940000000000000000000000000000000000000000880de0b6b3a764000080c0'
@@ -66,7 +66,7 @@ describe('sendRawTransactionSync', () => {
 
   it('should propagate errors from client request', async () => {
     const error = new Error('Transaction failed')
-    vi.mocked(mockClient.request).mockRejectedValue(error)
+    ;(mockClient.request as ReturnType<typeof vi.fn>).mockRejectedValue(error)
 
     const serializedTransaction = '0xbadtransaction'
 
@@ -85,7 +85,7 @@ describe('sendRawTransactionSync', () => {
 
   it('should use retryCount of 0', async () => {
     const mockReceipt = { transactionHash: '0x789' }
-    vi.mocked(mockClient.request).mockResolvedValue(mockReceipt)
+    ;(mockClient.request as ReturnType<typeof vi.fn>).mockResolvedValue(mockReceipt)
 
     await sendRawTransactionSync(mockClient, {
       serializedTransaction: '0x123',
