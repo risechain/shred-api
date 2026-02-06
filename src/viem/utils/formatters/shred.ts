@@ -7,6 +7,7 @@ import type {
   RpcShredTransactionEip2930,
   RpcShredTransactionEip7702,
   RpcShredTransactionLegacy,
+  RpcShredTransactionReceiptDeposit,
   Shred,
   ShredDepositTransaction,
   ShredStateChange,
@@ -28,7 +29,7 @@ export function formatShredStateChange(
     return {
       address: address as `0x${string}`,
       balance: BigInt(stateChange.balance),
-      newCode: stateChange.new_code,
+      newCode: stateChange.newCode,
       nonce: stateChange.nonce,
       storageChanges: Object.entries(stateChange.storage).map(
         ([slot, value]) => {
@@ -44,111 +45,120 @@ export function formatShredStateChange(
 
 export function formatShred(shred: RpcShred, chainId: number): Shred {
   return {
-    blockNumber: BigInt(shred.block_number),
-    shredIndex: shred.shred_idx,
-    blockTimestamp: BigInt(shred.block_timestamp),
-    startingLogIndex: shred.starting_log_index,
-    stateChanges: shred.state_changes
-      ? formatShredStateChange(shred.state_changes)
+    blockNumber: BigInt(shred.blockNumber),
+    shredIndex: shred.shredIdx,
+    blockTimestamp: BigInt(shred.blockTimestamp),
+    startingLogIndex: shred.startingLogIndex,
+    stateChanges: shred.stateChanges
+      ? formatShredStateChange(shred.stateChanges)
       : [],
     transactions: shred.transactions.map(({ receipt, transaction }) => {
       const txChainId =
         'chainId' in transaction && transaction.chainId
           ? hexToNumber(transaction.chainId)
           : chainId
-      if ('Legacy' in receipt) {
+
+      const receiptType = receipt.type
+
+      if (receiptType === '0x0') {
+        // Legacy transaction
         const tx = transaction as RpcShredTransactionLegacy
         const formattedTx = {
           ...tx,
           chainId: txChainId,
-          cumulativeGasUsed: BigInt(receipt.Legacy.cumulativeGasUsed),
+          cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed),
           gas: BigInt(tx.gas),
           gasPrice: BigInt(tx.gasPrice),
-          status: receiptStatuses[receipt.Legacy.status],
+          status: receiptStatuses[receipt.status],
           nonce: hexToNumber(tx.nonce),
           type: 'legacy',
           typeHex: tx.type,
           value: BigInt(tx.value),
-          logs: receipt.Legacy.logs,
+          logs: receipt.logs,
           v: hexToBigInt(tx.v),
           from: tx.signer,
         } satisfies ShredTransactionLegacy
         return formattedTx
-      } else if ('Eip1559' in receipt) {
+      } else if (receiptType === '0x2') {
+        // EIP-1559 transaction
         const tx = transaction as RpcShredTransactionEip1559
         const formattedTx = {
           ...tx,
           chainId: txChainId,
-          cumulativeGasUsed: BigInt(receipt.Eip1559.cumulativeGasUsed),
+          cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed),
           gas: BigInt(tx.gas),
           maxFeePerGas: BigInt(tx.maxFeePerGas),
           maxPriorityFeePerGas: BigInt(tx.maxPriorityFeePerGas),
-          status: receiptStatuses[receipt.Eip1559.status],
+          status: receiptStatuses[receipt.status],
           nonce: hexToNumber(tx.nonce),
           type: 'eip1559',
           typeHex: tx.type,
           value: BigInt(tx.value),
-          logs: receipt.Eip1559.logs,
+          logs: receipt.logs,
           v: BigInt(tx.v),
           from: tx.signer,
         } satisfies ShredTransactionEip1559
         return formattedTx
-      } else if ('Eip2930' in receipt) {
+      } else if (receiptType === '0x1') {
+        // EIP-2930 transaction
         const tx = transaction as RpcShredTransactionEip2930
         const formattedTx = {
           ...tx,
           chainId: txChainId,
-          cumulativeGasUsed: BigInt(receipt.Eip2930.cumulativeGasUsed),
+          cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed),
           gas: BigInt(tx.gas),
-          status: receiptStatuses[receipt.Eip2930.status],
+          status: receiptStatuses[receipt.status],
           nonce: hexToNumber(tx.nonce),
           type: 'eip2930',
           typeHex: tx.type,
           value: BigInt(tx.value),
-          logs: receipt.Eip2930.logs,
+          logs: receipt.logs,
           v: BigInt(tx.v),
           gasPrice: BigInt(tx.gasPrice),
           from: tx.signer,
         } satisfies ShredTransactionEip2930
         return formattedTx
-      } else if ('Eip7702' in receipt) {
+      } else if (receiptType === '0x4') {
+        // EIP-7702 transaction
         const tx = transaction as RpcShredTransactionEip7702
         const formattedTx = {
           ...tx,
           chainId: txChainId,
-          cumulativeGasUsed: BigInt(receipt.Eip7702.cumulativeGasUsed),
+          cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed),
           gas: BigInt(tx.gas),
           maxFeePerGas: BigInt(tx.maxFeePerGas),
           maxPriorityFeePerGas: BigInt(tx.maxPriorityFeePerGas),
-          status: receiptStatuses[receipt.Eip7702.status],
+          status: receiptStatuses[receipt.status],
           nonce: hexToNumber(tx.nonce),
           type: 'eip7702',
           typeHex: tx.type,
           value: BigInt(tx.value),
-          logs: receipt.Eip7702.logs,
+          logs: receipt.logs,
           v: BigInt(tx.v),
           from: tx.signer,
         } satisfies ShredTransactionEip7702
         return formattedTx
-      } else if ('Deposit' in receipt) {
+      } else if (receiptType === '0x7e') {
+        // Deposit transaction
         const tx = transaction as RpcShredDepositTransaction
+        const depositReceipt = receipt as RpcShredTransactionReceiptDeposit
         return {
           ...tx,
           chainId,
-          cumulativeGasUsed: BigInt(receipt.Deposit.cumulativeGasUsed),
+          cumulativeGasUsed: BigInt(receipt.cumulativeGasUsed),
           gas: BigInt(tx.gas),
-          status: receiptStatuses[receipt.Deposit.status],
-          nonce: hexToNumber(receipt.Deposit.depositNonce),
+          status: receiptStatuses[receipt.status],
+          nonce: hexToNumber(depositReceipt.depositNonce),
           type: 'deposit',
           typeHex: tx.type,
           value: BigInt(tx.value),
-          logs: receipt.Deposit.logs,
+          logs: receipt.logs,
           v: BigInt(tx.v),
           mint: BigInt(tx.mint),
           from: tx.from,
         } satisfies ShredDepositTransaction
       } else {
-        throw new Error('Unknown tx type')
+        throw new Error(`Unknown tx type: ${receiptType}`)
       }
     }),
   }

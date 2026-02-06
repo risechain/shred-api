@@ -117,11 +117,11 @@ export type RpcShredTransactionEip1559 = Omit<
   'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
-export type RpcShredTransactionReceiptEip1559 = {
-  Eip1559: Pick<
-    ShredTransactionEip1559<Hex, Hex, '0x0' | '0x1', Hex>,
-    'logs' | 'cumulativeGasUsed' | 'status'
-  >
+export type RpcShredTransactionReceiptEip1559 = Pick<
+  ShredTransactionEip1559<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+> & {
+  type: Hex
 }
 
 export type RpcShredTransactionLegacy = Omit<
@@ -129,11 +129,11 @@ export type RpcShredTransactionLegacy = Omit<
   'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
-export type RpcShredTransactionReceiptLegacy = {
-  Legacy: Pick<
-    ShredTransactionLegacy<Hex, Hex, '0x0' | '0x1', Hex>,
-    'logs' | 'cumulativeGasUsed' | 'status'
-  >
+export type RpcShredTransactionReceiptLegacy = Pick<
+  ShredTransactionLegacy<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+> & {
+  type: Hex
 }
 
 export type RpcShredTransactionEip2930 = Omit<
@@ -141,11 +141,11 @@ export type RpcShredTransactionEip2930 = Omit<
   'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
-export type RpcShredTransactionReceiptEip2930 = {
-  Eip2930: Pick<
-    ShredTransactionEip2930<Hex, Hex, '0x0' | '0x1', Hex>,
-    'logs' | 'cumulativeGasUsed' | 'status'
-  >
+export type RpcShredTransactionReceiptEip2930 = Pick<
+  ShredTransactionEip2930<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+> & {
+  type: Hex
 }
 
 export type RpcShredTransactionEip7702 = Omit<
@@ -153,11 +153,11 @@ export type RpcShredTransactionEip7702 = Omit<
   'logs' | 'cumulativeGasUsed' | 'status' | 'from'
 >
 
-export type RpcShredTransactionReceiptEip7702 = {
-  Eip7702: Pick<
-    ShredTransactionEip7702<Hex, Hex, '0x0' | '0x1', Hex>,
-    'logs' | 'cumulativeGasUsed' | 'status'
-  >
+export type RpcShredTransactionReceiptEip7702 = Pick<
+  ShredTransactionEip7702<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+> & {
+  type: Hex
 }
 
 export type RpcShredDepositTransaction = Omit<
@@ -165,13 +165,12 @@ export type RpcShredDepositTransaction = Omit<
   'logs' | 'cumulativeGasUsed' | 'status' | 'chainId' | 'nonce'
 >
 
-export type RpcShredTransactionReceiptDeposit = {
-  Deposit: Pick<
-    ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
-    'logs' | 'cumulativeGasUsed' | 'status'
-  > & {
-    depositNonce: Hex
-  }
+export type RpcShredTransactionReceiptDeposit = Pick<
+  ShredDepositTransaction<Hex, Hex, '0x0' | '0x1', Hex>,
+  'logs' | 'cumulativeGasUsed' | 'status'
+> & {
+  type: Hex
+  depositNonce: Hex
 }
 
 export type RpcShredStateChanges = {
@@ -181,7 +180,7 @@ export type RpcShredStateChanges = {
     storage: {
       [k: Hex]: Hex
     }
-    new_code: Hex | null
+    newCode: Hex | null
   }
 }
 
@@ -209,10 +208,10 @@ export type RpcShredTransaction = OneOf<
 >
 
 export type RpcShred = {
-  block_number: number
-  shred_idx: number
-  block_timestamp: number
-  starting_log_index: number
+  blockNumber: number
+  shredIdx: number
+  blockTimestamp: number
+  startingLogIndex: number
   transactions: RpcShredTransaction[]
-  state_changes?: RpcShredStateChanges
+  stateChanges?: RpcShredStateChanges
 }
